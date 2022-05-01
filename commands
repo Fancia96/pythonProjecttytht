@@ -1,0 +1,24 @@
+
+
+python main.py user --login Fancia
+
+python main.py user --login Fancia show-users
+
+python main.py user --login Fancia show-users --filter nci
+
+python main.py user --login Fancia delete-yourself --im_sure
+
+python main.py user --login Shobo delete-yourself --im_sure
+
+python main.py register --register_name Fancia
+
+
+python main.py user --login Shobo create-room --unique_id Pokoj3
+
+python main.py user --login Fancia room --unique_id Pokoj2 delete-room
+
+python main.py user --login Fancia room --unique_id Pokoj1 join-room
+
+python main.py user --login Fancia room --unique_id Pokoj1 leave-room
+
+python main.py initialize-db

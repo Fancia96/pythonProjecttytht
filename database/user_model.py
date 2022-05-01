@@ -3,6 +3,7 @@ import os
 
 class User:
     def __init__(self, name, password):
+        self.id = None
         self.name = name
         self.password = password
     def get_name(self):
@@ -13,4 +14,8 @@ class User:
         self.name = name
     def set_password(self, password):
         self.password = password
+    def get_id(self):
+        return self.id
+    def set_id(self, id):
+        self.id = id
 

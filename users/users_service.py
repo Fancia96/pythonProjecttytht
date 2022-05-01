@@ -3,18 +3,21 @@ import os
 import bcrypt
 import database.database
 from database.user_model import User
+from database.database import Database
 
 
 class UserService:
+
     #TODO tu powinien byc obiekt usera
-    def login(self, name, password):
-        user = database.database.find_db_user(name)
+    def login(self, database, name, password):
+        user = database.find_db_user(name)
+
         if user and bcrypt.checkpw(password.encode(), user.get_password()):
             return user
         else:
             return None
 
-    def check_name(self, name):
+    def check_name(self, database, name):
         alpha_numeric = "abcdefghijklmnopqrstuvwxyz0123456789"
 
         if len(name) == 0:
@@ -23,7 +26,7 @@ class UserService:
         elif not all(c in alpha_numeric for c in name.lower()):
             print("Nazwa musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
             return False
-        elif database.database.find_db_user(name):
+        elif database.find_db_user(name):
             print("Podana nazwa użytkownika już istnieje")
             return False
 
@@ -62,20 +65,28 @@ class UserService:
         else:
             return False
 
-    def register(self, name, password):
+    def register(self, database, name, password):
         # TODO hash the password
         user = User(name, bcrypt.hashpw(password.encode(), bcrypt.gensalt()))
-        database.database.write_db_user(user)
+        user_id = database.write_db_user(user)
+        user.set_id(user_id)
+
         return user
 
-    def delete_user(self, user: User):
-        database.database.delete_db_user(user.name)
+    def find_all_users(self, database, text):
+        print("Znalezieni użytkownicy:")
+        for user in database.find_db_all_users(text):
+            print(user.get_name())
+
+    def delete_user(self, database, user: User):
+        database.delete_db_user(user)
 
         #delete all rooms and users in
-        for room in database.database.get_my_rooms(user):
-            database.database.delete_room(room, user)
 
-        database.database.delete_my_room_connections(user)
+        # for room in database.database.get_my_rooms(user):
+        #     database.delete_room(room, user)
+        #
+        # database.delete_my_room_connections(user)
 
-        user = database.database.find_db_user(user.get_name())
+        user = database.find_db_user(user.get_name())
         return user

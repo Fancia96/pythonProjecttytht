@@ -9,7 +9,14 @@ db_users_path = os.path.join(current_dir, "db_users.csv")
 db_rooms_path = os.path.join(current_dir, "db_rooms.csv")
 db_rooms_users_path = os.path.join(current_dir, "db_rooms_users.csv")
 
-#class DatabaseClass:
+class Database:
+
+    def __init__(self, connection):
+
+        self.conn = connection
+        self.cur = connection.cursor()
+
+        self.create_tables()
 
 def check_db_exist(path):
     try:
