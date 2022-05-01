@@ -615,19 +615,30 @@ def delete_subject(obj, im_sure):
 #         menu()
 
 
-def _ask_for_name():
-    global name
-    name = input("Podaj nazwe uzytkownika: ")
+# def _ask_for_name():
+#     global name
+#     name = input("Podaj nazwe uzytkownika: ")
+#
+#
+# def _ask_for_enter():
+#     print("Powrót do menu, naciśnij enter ")
+#     powrot = input("")
+#
+#
+# def _ask_for_password():
+#     global password
+#     password = getpass.getpass("Podaj haslo: ")
+#
+#
+# def _ask_for_room_name():
+#     global room_name
+#     room_name = input("Podaj nazwe pokoju: ")
+#
+#
+# def _ask_for_room_password():
+#     global room_password
+#     room_password = getpass.getpass("Podaj haslo pokoju: ")
 
-
-def _ask_for_enter():
-    print("Powrót do menu, naciśnij enter ")
-    powrot = input("")
-
-
-def _ask_for_password():
-    global password
-    password = getpass.getpass("Podaj haslo: ")
 
 if __name__ == '__main__':
     cli()
