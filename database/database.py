@@ -71,6 +71,9 @@ class Database:
         room = Room(db_room[1], db_room[2], db_room[3].encode())
         room.set_id(db_room[0])
 
+        room.set_subject(db_room[4])
+        room.set_points(db_room[5])
+
         return room
         #    print(user)
         #
@@ -137,8 +140,8 @@ class Database:
 
     def create_room(self, room: Room, user: User):
         self.cur.execute(
-            "INSERT INTO room (owner_id, room_name, password) " +
-            "VALUES (?, ?, ? )", (user.get_id(), room.get_unique_id(), room.get_password().decode()))
+            "INSERT INTO room (owner_id, room_name, password, subject, points) " +
+            "VALUES (?, ?, ? , '', 0)", (user.get_id(), room.get_unique_id(), room.get_password().decode()))
         self.conn.commit()
 
         return self.cur.lastrowid
@@ -254,6 +257,35 @@ class Database:
 
         return True
 
+    def is_subject_db(self, room_id):
+        self.cur.execute("SELECT subject FROM room WHERE id  = ? ", [room_id])
+        subject = self.cur.fetchone()
+
+        if subject[0] and len(subject[0]) == 0:
+            return False
+
+        return True
+
+    def set_subject_db(self, room_id, subject):
+        self.cur.execute(
+            "UPDATE room SET subject = ? , points = 0 " +
+            " WHERE id = ?", (subject, room_id))
+        self.conn.commit()
+
+        # with open(db_rooms_users_path, 'r', newline='') as file:
+        #     csv_reader = csv.reader(file)
+        #     for line in csv_reader:
+        #         if room_name == line[0] and user.get_name().upper() == line[1].upper():
+        #             #you joined this room before
+        #             return True
+        #     return False
+
+    def add_points_db(self, room_id, points):
+        self.cur.execute(
+            "UPDATE room SET points = points + ? " +
+            " WHERE id = ?", (points, room_id))
+        self.conn.commit()
+
         # with open(db_rooms_users_path, 'r', newline='') as file:
         #     csv_reader = csv.reader(file)
         #     for line in csv_reader:
@@ -330,6 +362,19 @@ class Database:
 
         return self.make_room_object(db_room)
 
+    def find_db_room_by_id(self, room_id):
+        # owner_id
+        # INTEGER, room_name
+        # TEXT, password
+        # TEXT
+        self.cur.execute(" SELECT * FROM room WHERE id = ? ", [room_id])
+
+        db_room = self.cur.fetchone()
+
+        # print(db_user)
+
+        return self.make_room_object(db_room)
+
         # with open(db_rooms_path, 'r', newline='') as file:
         #     csv_reader = csv.reader(file)
         #     for line in csv_reader:
@@ -348,7 +393,7 @@ class Database:
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, password TEXT);")
         self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS room (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER, room_name TEXT, password TEXT);")
+            "CREATE TABLE IF NOT EXISTS room (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER, room_name TEXT, password TEXT, subject TEXT, points NUMERIC);")
         self.cur.execute("CREATE TABLE IF NOT EXISTS room_user (room_id INTEGER, user_id INTEGER);")
         #self.cur.execute("INSERT INTO user (name, password) VALUES ('Fancia', 'password')")
         self.conn.commit()

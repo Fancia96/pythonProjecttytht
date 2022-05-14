@@ -121,20 +121,40 @@ def create_room(obj, unique_id, password):
 
 @user.group('room')
 @click.option("--unique_id", required=True)
-@click.password_option(confirmation_prompt=False)
+#@click.password_option(confirmation_prompt=False)
 @click.pass_obj
-def room(obj, unique_id, password):
+def room(obj, unique_id):
     #vrerify blablabla
     user = obj['user']
+    db = obj['db']
 
-    room = rooms_service.find_room(obj['db'], unique_id, password)
+    room: Room = rooms_service.find_room(obj['db'], unique_id, '', False)
     if room is None:
-        print("Nieprawidłowya nazwa lub hasło pokoju")
+        print("Nieprawidłowa nazwa lub hasło pokoju")
         sys.exit()
         #raise Exception("Nieprawidłowy login lub hasło")
     else:
-        print("Prawidłowe dane pokoju")
-        obj['room'] = room
+        if rooms_service.check_if_already_joined_this_room(db, room.get_id(), user.get_id()) or rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+            print("Prawidłowe dane pokoju")
+            obj['room'] = room
+        else:
+            password = getpass.getpass("Podaj haslo do pokoju: ")
+            room_2: Room = rooms_service.find_room(obj['db'], unique_id, password, True)
+            if room_2 is None:
+                print("Nieprawidłowa nazwa lub hasło pokoju")
+                sys.exit()
+            else:
+                print("Prawidłowe dane pokoju")
+
+                joined = rooms_service.join_room(db, room_2.get_id(), user.get_id())
+
+                if joined:
+                    print("Dołączono do pokoju")
+                else:
+                    print("Nie dołączono do pokoju")
+                    sys.exit()
+
+                obj['room'] = room_2
 
 
 
@@ -154,26 +174,28 @@ def delete_room(obj, im_sure):
 @room.command()
 @click.pass_obj
 def join_room(obj):
-    db = obj['db']
-    room = obj['room']
-    user = obj['user']
 
-    # check if you are owner
-    if not rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
-
-        # check if you already joned this room
-        if not rooms_service.check_if_already_joined_this_room(db, room.get_id(), user.get_id()):
-
-            joined = rooms_service.join_room(db, room.get_id(), user.get_id())
-
-            if joined:
-                print("Dołączono do pokoju")
-            else:
-                print("Nie dołączono do pokoju")
-        else:
-            print("Już dołączyłeś do tego pokoju wcześniej")
-    else:
-        print("Nie jesteś wlascicielem pokoju")
+    pass
+#     db = obj['db']
+#     room = obj['room']
+#     user = obj['user']
+#
+#     # check if you are owner
+#     if not rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+#
+#         # check if you already joned this room
+#         if not rooms_service.check_if_already_joined_this_room(db, room.get_id(), user.get_id()):
+#
+#             joined = rooms_service.join_room(db, room.get_id(), user.get_id())
+#
+#             if joined:
+#                 print("Dołączono do pokoju")
+#             else:
+#                 print("Nie dołączono do pokoju")
+#         else:
+#             print("Już dołączyłeś do tego pokoju wcześniej")
+#     else:
+#         print("Nie jesteś wlascicielem pokoju")
 
 
 @room.command()
@@ -205,43 +227,71 @@ def leave_room(obj):
 #TODO SHHHHHHHHHHHHHHHHHHHHHHH
     #shh_all_rooms
 
-@room.command()
-@click.option("--subject", required=True)
-@click.pass_obj
-def add_subject(obj, subject):
-
-    pass
-
-@room.command()
-@click.option("--subject", required=True)
-@click.pass_obj
-def add_subject(obj, subject):
-    pass
 
 @room.group('subject')
-@click.option("--subject_id", required=True)
 @click.pass_obj
-def subject(obj, subject_id):
-    #find in database > obj
+def subject(obj):
     pass
 
 @subject.command()
+@click.option("--subject", required=True)
 @click.pass_obj
-def set_active_subject(obj):
+def set_subject(obj, subject):
+    db = obj['db']
+    room = obj['room']
+    user = obj['user']
 
-    pass
+    # check if you are owner
+    if rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+
+        #is_subject = rooms_service.is_subject(db, room.get_id())
+
+        complete = rooms_service.set_subject(db, room.get_id(), subject)
+        if complete:
+            print("Temat ustawiony")
+    else:
+        print("Nie jesteś wlascicielem pokoju")
+
+# @subject.command()
+# @click.pass_obj
+# def set_active_subject(obj):
+#
+#     pass
 
 @subject.command()
-@click.option("--new_subject", required=True)
-@click.pass_obj
-def update_subject(obj, new_subject):
-    pass
-
-@subject.command()
-@click.option("--im_sure", required=True)
+@click.option("--im_sure", required=False, is_flag=True, default=False)
 @click.pass_obj
 def delete_subject(obj, im_sure):
-    pass
+    db = obj['db']
+    room = obj['room']
+    user = obj['user']
+
+    # check if you are owner
+    if rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+
+        complete = rooms_service.set_subject(db, room.get_id(), '')
+        if complete:
+            print("Temat usunięty")
+    else:
+        print("Nie jesteś wlascicielem pokoju")
+
+@subject.command()
+@click.option("--number", required=True, type=float)
+@click.pass_obj
+def vote_subject(obj, number):
+    db = obj['db']
+    room = obj['room']
+
+    list = [0, 0.5, 1, 2, 3, 5, 8, 13, 20, 50, 100, 200, -1, -2]
+
+    if number in list:
+        points = rooms_service.add_points(db, room.get_id(), number)
+        print(f"Punkty dodane - aktualne {points}")
+    else:
+        print(f"ZŁY NUMER {number} Można głosowac jedynie podajać poniższe wartości")
+        print(", ".join(str(item) for item in list))
+
+
 
 # def main_menu():
 #     global user

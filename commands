@@ -22,3 +22,9 @@ python main.py user --login Fancia room --unique_id Pokoj1 join-room
 python main.py user --login Fancia room --unique_id Pokoj1 leave-room
 
 python main.py initialize-db
+
+python main.py user --login Fancia room --unique_id Pokoj1 subject set-subject --subject "hdhdh dhdhd"
+
+python main.py user --login Fancia room --unique_id Pokoj1 subject delete-subject --im_sure
+
+python main.py user --login Fancia room --unique_id Pokoj1 subject vote-subject --number 0.5

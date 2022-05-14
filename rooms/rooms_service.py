@@ -18,6 +18,23 @@ class RoomsService:
         room = database.find_db_room(unique_id)
         return room
 
+    def set_subject(self, database, room_id, subject: str):
+        # TODO hash the password
+        database.set_subject_db(room_id, subject)
+
+        is_subject = database.is_subject_db(room_id)
+        if is_subject:
+            return True
+        else:
+            return False
+
+    def add_points(self, database, room_id, points):
+        # TODO hash the password
+
+        database.add_points_db(room_id, points)
+
+        return database.find_db_room_by_id(room_id).get_points()
+
     def are_you_room_owner(self, user_iq, room_owner_id):
         if user_iq == room_owner_id:
             return True
@@ -25,6 +42,9 @@ class RoomsService:
 
     def check_if_already_joined_this_room(self, database, room_id, user_id):
         return database.check_if_already_joined_this_room_db(room_id, user_id)
+
+    def is_subject(self, database, room_id):
+        return database.is_subject_db(room_id)
 
 
 #first checked if you are owner
@@ -67,10 +87,13 @@ class RoomsService:
 
         return True
 
-    def find_room(self, database, name, password):
+    def find_room(self, database, name, password, check_password):
         room = database.find_db_room(name)
 
-        if room and bcrypt.checkpw(password.encode(), room.get_password()):
-            return room
+        if check_password:
+            if room and bcrypt.checkpw(password.encode(), room.get_password()):
+                return room
+            else:
+                return None
         else:
-            return None
+            return room

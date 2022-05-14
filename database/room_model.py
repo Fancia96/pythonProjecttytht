@@ -33,3 +33,15 @@ class Room:
 
     def set_owner_id(self, owner_id):
         self.owner_id = owner_id
+
+    def get_subject(self):
+        return self.subject
+
+    def set_subject(self, subject):
+        self.subject = subject
+
+    def get_points(self):
+        return self.points
+
+    def set_points(self, points):
+        self.points = points
