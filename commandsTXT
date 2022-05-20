@@ -13,7 +13,7 @@ python main.py user --login Shobo delete-yourself --im_sure
 python main.py register --register_name Fancia
 
 
-python main.py user --login Shobo create-room --unique_id Pokoj3
+python main.py user --login Fancia create-room --unique_id Pokoj3
 
 python main.py user --login Fancia room --unique_id Pokoj2 delete-room
 
@@ -28,3 +28,22 @@ python main.py user --login Fancia room --unique_id Pokoj1 subject set-subject -
 python main.py user --login Fancia room --unique_id Pokoj1 subject delete-subject --im_sure
 
 python main.py user --login Fancia room --unique_id Pokoj1 subject vote-subject --number 0.5
+
+
+
+requests
+POST http://localhost:5000/api/users/login
+Content-Type: application/json
+
+{
+  "login" : "Fancia", "password" : "test password"
+}
+
+
+POST http://localhost:5000/api/users/refresh
+Content-Type: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzMDAwMjM1fQ.-K5glC_nB8l-ayCcJm2ppTbHTsYYhpjgfh8-j_XaO-U
+
+
+
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzMDAwMjM1fQ.-K5glC_nB8l-ayCcJm2ppTbHTsYYhpjgfh8-j_XaO-U

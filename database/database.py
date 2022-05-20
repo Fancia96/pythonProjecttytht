@@ -43,6 +43,16 @@ class Database:
         #     csv_writer = csv.writer(file)
         #     csv_writer.writerow([user.get_name(), user.get_password().decode()])
 
+    def find_db_user_by_id(self, id):
+        # print(user_name)
+        self.cur.execute(" SELECT * FROM user WHERE user.id = ? ", [id])
+
+        db_user = self.cur.fetchone()
+
+        # print(db_user)
+
+        return self.make_user_object(db_user)
+
     def find_db_user(self, user_name: str):
         #print(user_name)
         self.cur.execute(" SELECT * FROM user WHERE name LIKE ? ", [user_name])

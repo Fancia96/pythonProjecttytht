@@ -3,16 +3,17 @@
 # Press Shift+F10 to execute it or replace it with your code.
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 import sys
-import typing
 
 import click
+import uvicorn
 
-import database.database
-import os
+import commands.usersCommands
+import config
 import getpass
 
 from database.user_model import User
 from database.room_model import Room
+from expections.expections import Expection
 from users.users_service import UserService
 from rooms.rooms_service import RoomsService
 
@@ -21,11 +22,17 @@ rooms_service = RoomsService()
 
 
 
+
 @click.group()
 @click.pass_context
 def cli(ctx):
     ctx.obj = {}
-    ctx.obj['db'] = database.database.get_database('main.db')
+    ctx.obj['db'] = config.db
+
+@cli.command()
+@click.pass_obj
+def run_as_server(ctx):
+    uvicorn.run("server:app", host="127.0.0.1", port=5000, log_level="info")
 
 @cli.command()
 @click.pass_obj
@@ -44,7 +51,8 @@ def initialize_db(obj):
 def user(obj, login, password):
     db = obj['db']
 
-    user = user_service.login(db, login, password)
+    user = commands.usersCommands.login(db, login, password)
+    #user = user_service.login(db, login, password)
     if user is None:
         print("Nieprawidłowy login lub hasło")
         sys.exit()
@@ -61,13 +69,12 @@ def register(obj, register_name, password):
     db = obj['db']
     #print(db)
     #user_service.find_all_users(db)
-
-    if user_service.check_name(db, register_name):
-        #print("Haslo co najmniej 8 znaków, duże i małe litery, cyfry i znaki specjalne")
-        if user_service.check_password(password):
-            user = user_service.register(db, register_name, password)
-            obj['user'] = user
-            click.echo("Zarejestrowano użytkownika")
+    try:
+        user = commands.usersCommands.register(db, register_name, password)
+        obj['user'] = user
+        click.echo("Zarejestrowano użytkownika")
+    except Expection as exp:
+        print(exp.massage)
 
 #bez filtra pokazuje wszystkich, z nim filtruje
 @user.command()

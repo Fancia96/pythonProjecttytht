@@ -2,8 +2,10 @@
 import os
 import bcrypt
 import database.database
+import expections.expections
 from database.user_model import User
 from database.database import Database
+from expections.expections import Expection
 
 
 class UserService:
@@ -21,14 +23,17 @@ class UserService:
         alpha_numeric = "abcdefghijklmnopqrstuvwxyz0123456789"
 
         if len(name) == 0:
-            print("Nazwa nie może być pusta")
-            return False
+            #print("Nazwa nie może być pusta")
+            raise Expection(expections.expections.INVALID_USER_DATA, "Nazwa nie może być pusta")
+            #return False
         elif not all(c in alpha_numeric for c in name.lower()):
-            print("Nazwa musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
-            return False
+            #print("Nazwa musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
+            raise Expection(expections.expections.INVALID_USER_DATA, "Nazwa musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
+            #return False
         elif database.find_db_user(name):
-            print("Podana nazwa użytkownika już istnieje")
-            return False
+            #print("Podana nazwa użytkownika już istnieje")
+            raise Expection(expections.expections.USER_EXIST, "Podana nazwa użytkownika już istnieje")
+            #return False
 
         return True
 
@@ -41,29 +46,33 @@ class UserService:
 
         special_characters = "!@#$%^&*()-+?_=,.{}\<>/"
 
+        error_massage = ""
+
         if len(password) < 8:
-            print("haslo za krotkie")
+            error_massage += "haslo za krotkie \n"
             bad_password_length = False
         if not any(char.isdigit() for char in password):
-            print("haslo musi zawierać cyfrę")
+            error_massage += "haslo musi zawierać cyfrę \n"
             bad_password_numbers = False
         if password.upper() == password:
-            print("haslo musi zawierać małe litery")
+            error_massage += "haslo musi zawierać małe litery \n"
             bad_password_small_letter = False
         if password.lower() == password:
-            print("haslo musi zawierać duże litery")
+            error_massage += "haslo musi zawierać duże litery \n"
             bad_password_big_letter = False
         if not any(c in special_characters for c in password):
-            print("haslo musi zawierać znak specjalny")
+            error_massage += "haslo musi zawierać znak specjalny \n"
             bad_password_specials = False
         if ' ' in password == True:
-            print("haslo nie moze zawierac spacji")
+            error_massage += "haslo nie moze zawierac spacji \n"
             bad_password_specials = False
 
         if bad_password_length and bad_password_numbers and bad_password_small_letter and bad_password_big_letter and bad_password_specials:
             return True
         else:
-            return False
+            #return False
+            raise Expection(expections.expections.INVALID_USER_DATA,
+                        error_massage)
 
     def register(self, database, name, password):
         # TODO hash the password
@@ -77,6 +86,14 @@ class UserService:
         print("Znalezieni użytkownicy:")
         for user in database.find_db_all_users(text):
             print(user.get_name())
+
+    def find_user_by_id(self, database, id):
+        user = database.find_db_user_by_id(id)
+
+        if user:
+            return user
+        else:
+            return None
 
     def delete_user(self, database, user: User):
         database.delete_db_user(user)
