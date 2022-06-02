@@ -84,8 +84,15 @@ class UserService:
 
     def find_all_users(self, database, text):
         print("Znalezieni użytkownicy:")
-        for user in database.find_db_all_users(text):
-            print(user.get_name())
+        users_list = database.find_db_all_users(text)
+
+        # list_users = []
+        #
+        # for user in users_list:
+        #     print(user.get_name())
+        #     list_users.append(user.get_name())
+
+        return users_list
 
     def find_user_by_id(self, database, id):
         user = database.find_db_user_by_id(id)

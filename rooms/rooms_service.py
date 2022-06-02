@@ -97,3 +97,20 @@ class RoomsService:
                 return None
         else:
             return room
+
+    def find_room_sub_an_vote(self, database, name, password, check_password):
+        room = database.find_db_room(name)
+
+        if check_password:
+            if room and bcrypt.checkpw(password.encode(), room.get_password()):
+                return room
+            else:
+                return None
+        else:
+            return room
+
+
+    def get_my_rooms_and_room_i_joined(self, database, user: User):
+        rooms_list = database.get_my_rooms_and_room_i_joined(user)
+
+        return rooms_list

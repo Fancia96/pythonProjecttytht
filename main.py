@@ -85,7 +85,11 @@ def show_users(obj, filter):
     db = obj['db']
     #user = obj['user']
 
-    user_service.find_all_users(db, filter)
+    users_list = user_service.find_all_users(db, filter)
+
+    for user in users_list:
+        click.echo(user.get_name())
+
 
 @user.command()
 @click.pass_obj
@@ -243,7 +247,7 @@ def subject(obj):
 @subject.command()
 @click.option("--subject", required=True)
 @click.pass_obj
-def set_subject(obj, subject):
+def set(obj, subject):
     db = obj['db']
     room = obj['room']
     user = obj['user']
@@ -268,7 +272,7 @@ def set_subject(obj, subject):
 @subject.command()
 @click.option("--im_sure", required=False, is_flag=True, default=False)
 @click.pass_obj
-def delete_subject(obj, im_sure):
+def delete(obj, im_sure):
     db = obj['db']
     room = obj['room']
     user = obj['user']
@@ -285,7 +289,7 @@ def delete_subject(obj, im_sure):
 @subject.command()
 @click.option("--number", required=True, type=float)
 @click.pass_obj
-def vote_subject(obj, number):
+def vote(obj, number):
     db = obj['db']
     room = obj['room']
 

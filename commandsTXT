@@ -23,11 +23,11 @@ python main.py user --login Fancia room --unique_id Pokoj1 leave-room
 
 python main.py initialize-db
 
-python main.py user --login Fancia room --unique_id Pokoj1 subject set-subject --subject "hdhdh dhdhd"
+python main.py user --login Fancia room --unique_id Pokoj1 subject set --subject "hdhdh dhdhd"
 
-python main.py user --login Fancia room --unique_id Pokoj1 subject delete-subject --im_sure
+python main.py user --login Fancia room --unique_id Pokoj1 subject delete --im_sure
 
-python main.py user --login Fancia room --unique_id Pokoj1 subject vote-subject --number 0.5
+python main.py user --login Fancia room --unique_id Pokoj1 subject vote --number 0.5
 
 
 
@@ -36,14 +36,41 @@ POST http://localhost:5000/api/users/login
 Content-Type: application/json
 
 {
-  "login" : "Fancia", "password" : "test password"
+  "login" : "Fancia", "password" : "Abc123@@@"
 }
 
+GET http://localhost:5000/api/users/list
+Accept: application/json
+
+{
+  "filter" : "cia"
+}
 
 POST http://localhost:5000/api/users/refresh
 Content-Type: application/json
 Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzMDAwMjM1fQ.-K5glC_nB8l-ayCcJm2ppTbHTsYYhpjgfh8-j_XaO-U
 
 
+GET http://localhost:5000/api/users/list?filter=cia
+Accept: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzNTkyMjEwfQ.H-tjeiToCxwyTfhSgAKFu4QAg8tCEz1QvLeuPlU1rIo
 
-eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzMDAwMjM1fQ.-K5glC_nB8l-ayCcJm2ppTbHTsYYhpjgfh8-j_XaO-U
+
+GET http://localhost:5000/api/rooms/my
+Accept: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzNTk3MjMyfQ.DLCyUZu0f0bCi4GK9hFDWJsYDGNLsr89Z-QZzg4pcoU
+
+
+
+POST http://localhost:5000/api/rooms/create
+Content-Type: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzNTk3MjMyfQ.DLCyUZu0f0bCi4GK9hFDWJsYDGNLsr89Z-QZzg4pcoU
+
+{
+  "name": "test_room", "password": "Abc123@@@"
+}
+
+
+POST http://localhost:5000/api/rooms/6/join
+Accept: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzNTk4NTM3fQ.OE32TVhD1vGcuKKp5mHFBK2X3iq24Bpp23SJ60mQwOQ

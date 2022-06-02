@@ -90,3 +90,30 @@ class Refresh(HTTPEndpoint):
 def createToken(user: User):
     return jwt.encode({'id': user.get_id(), 'exp': datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=15)}, secretto, algorithm="HS256")
 
+class List(HTTPEndpoint):
+    @requires('authenticated')
+    async def get(self, request):
+
+        try:
+            query_param_filter = request.query_params['filter']
+
+            print(query_param_filter)
+
+            users_list = commands.usersCommands.find_all_users(db, query_param_filter)
+
+            print(users_list)
+
+            users_list_json = []
+
+            for user in users_list:
+                print(user.get_name())
+                json_users = {'username': user.get_name()}
+                users_list_json.append(json_users)
+            # create json
+
+            print(users_list_json)
+
+            return JSONResponse(users_list_json)
+
+        except Exception as excc:
+            return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)

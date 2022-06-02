@@ -206,6 +206,14 @@ class Database:
 
         return array_of_rooms
 
+    def get_my_rooms_and_room_i_joined(self, user: User):
+        self.cur.execute(" SELECT r.id, u.name as owner_id, r.room_name, r.password, r.subject, r.points FROM room r INNER JOIN user u ON u.id = r.owner_id WHERE r.owner_id = ?  OR r.id IN (SELECT room_id FROM room_user ru WHERE  ru.user_id= ? )", [user.get_id(), user.get_id()])
+
+        for db_user in self.cur.fetchall():
+            #print(db_user)
+            yield self.make_room_object(db_user)
+
+
     def get_my_rooms(self, user: User):
 
         #self.cur.execute("SELECT * FROM  room WHERE name LIKE ?", ["%"+filter_string+"%"])
@@ -280,6 +288,11 @@ class Database:
         self.cur.execute(
             "UPDATE room SET subject = ? , points = 0 " +
             " WHERE id = ?", (subject, room_id))
+
+        self.cur.execute(
+            "DELETE FROM room_subject_vote " +
+            " WHERE room_id = ?", (room_id))
+
         self.conn.commit()
 
         # with open(db_rooms_users_path, 'r', newline='') as file:
@@ -294,6 +307,7 @@ class Database:
         self.cur.execute(
             "UPDATE room SET points = points + ? " +
             " WHERE id = ?", (points, room_id))
+
         self.conn.commit()
 
         # with open(db_rooms_users_path, 'r', newline='') as file:
@@ -402,6 +416,8 @@ class Database:
     def create_tables(self):
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, password TEXT);")
+        self.cur.execute(
+            "CREATE TABLE IF NOT EXISTS room_subject_vote (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id INTEGER, user_id INTEGER, vote NUMERIC);")
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS room (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER, room_name TEXT, password TEXT, subject TEXT, points NUMERIC);")
         self.cur.execute("CREATE TABLE IF NOT EXISTS room_user (room_id INTEGER, user_id INTEGER);")

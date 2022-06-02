@@ -6,6 +6,11 @@ users_service = UserService()
 def login(db, login, password):
     return users_service.login(db, login, password)
 
+def find_all_users(db, str):
+    users_list = users_service.find_all_users(db, str)
+
+    return users_list
+
 def register(db, login, password):
 
     users_service.check_name(db, login)
