@@ -28,10 +28,10 @@ class RoomsService:
         else:
             return False
 
-    def add_points(self, database, room_id, points):
+    def add_points(self, database, room_id, user_id, points):
         # TODO hash the password
 
-        database.add_points_db(room_id, points)
+        database.add_points_db(room_id, user_id, points)
 
         return database.find_db_room_by_id(room_id).get_points()
 
@@ -109,8 +109,37 @@ class RoomsService:
         else:
             return room
 
+    def get_users_for_room(self, database, room_id):
+        room = database.find_db_room_users(room_id)
+
+        return room
+
+    def get_a_room_users_db(self, database, name):
+        room = database.find_db_room(name)
+
+        return room
+
+    def get_a_room_by_id_db(self, database, room_id):
+        room = database.find_db_room_by_id(room_id)
+
+        return room
+
+    def update_room(self, database, room: Room):
+        room = database.update_room_db(room)
+
+        return room
 
     def get_my_rooms_and_room_i_joined(self, database, user: User):
         rooms_list = database.get_my_rooms_and_room_i_joined(user)
 
         return rooms_list
+
+    def get_room_votes(self, database, room_id):
+        room = database.get_room_votes(room_id)
+
+        return room
+
+    def set_room_votes(self, database, room_id, user_id, points):
+        room = database.add_points_db(room_id, user_id, points)
+
+        return room

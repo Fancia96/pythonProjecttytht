@@ -8,7 +8,7 @@ class Room:
         self.unique_id = unique_id
         self.password = password
         self.subject = ""
-        self.points = 0
+        #self.points = 0
 
     def get_unique_id(self):
         return self.unique_id
@@ -40,8 +40,8 @@ class Room:
     def set_subject(self, subject):
         self.subject = subject
 
-    def get_points(self):
-        return self.points
+    #def get_points(self):
+    #    return self.points
 
-    def set_points(self, points):
-        self.points = points
+    #def set_points(self, points):
+    #    self.points = points

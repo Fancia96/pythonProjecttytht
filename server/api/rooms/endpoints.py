@@ -1,7 +1,8 @@
+import bcrypt
 from starlette.authentication import requires
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_200_OK
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN
 
 import commands.roomsCommands
 import config
@@ -74,7 +75,44 @@ class JoinRoom(HTTPEndpoint):
             return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
 
 
-class GetRoom(HTTPEndpoint):
+# class GetRoom(HTTPEndpoint):
+#     @requires('authenticated')
+#     async def get(self, request):
+#         try:
+#             room_id = request.path_params['id']
+#
+#             user = request.user
+#
+#             rooms_list = commands.roomsCommands.get_a_room(db, user, room_id)
+#
+#             print(rooms_list)
+#
+#             rooms_list_json = []
+#
+#             for room in rooms_list:
+#                 print(user.get_name())
+#                 json_users = {'name': room.get_unique_id(), 'id': room.get_id(), 'topic': room.get_owner_id(), 'users': [{'username':'hhhhh', 'username':'fffff'}], }
+#                 rooms_list_json.append(json_users)
+#
+#             return JSONResponse({}, HTTP_200_OK)
+#
+#         except Exception as excc:
+#             return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
+#
+#         # {“name”: “myName”, “id”: 8, “topic”: “my
+#         # topic”, “users”: [{
+#         # “username”: “test”
+#         # }, {
+#         # “username”: “test2”
+#         # }]}
+#         # Tylko
+#         # użytkownik
+#         # który
+#         # dołączył
+#         # do
+#         # pokoju
+
+class VoteSubject(HTTPEndpoint):
     @requires('authenticated')
     async def get(self, request):
         try:
@@ -82,32 +120,147 @@ class GetRoom(HTTPEndpoint):
 
             user = request.user
 
-            rooms_list = commands.roomsCommands.get_a_room(db, user, room_id)
+            room_votes_list = commands.roomsCommands.get_room_votes(db, room_id)
 
-            print(rooms_list)
+            # {
+            # “votes”: [{
+            # “username”: “test1”,
+            # “value”: 1
+            # }]
+            # }
 
-            rooms_list_json = []
+            print(room_votes_list)
 
-            for room in rooms_list:
-                print(user.get_name())
-                json_users = {'name': room.get_unique_id(), 'id': room.get_id(), 'topic': room.get_owner_id(), 'users': [{'username':'hhhhh', 'username':'fffff'}], }
-                rooms_list_json.append(json_users)
+            # room_users_list_json = []
+            #
+            # for room_vote in room_votes_list:
+            #     # print(user.get_name())
+            #     json_users = {'username': room_vote.get, 'value': }
+            #     room_users_list_json.append(json_users)
+
+            json_users = {'votes': list(room_votes_list)}
+
+            return JSONResponse(json_users, HTTP_200_OK)
+
+        except Exception as excc:
+            return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
+
+    @requires('authenticated')
+    async def put(self, request):
+        try:
+            room_id = request.path_params['id']
+
+            jsonData = await request.json()
+
+            user = request.user
+
+            vote = jsonData['vote']
+
+            #{“vote”: 0.5}
+
+            commands.roomsCommands.vote_a_room(db, room_id, user.get_id(), vote)
+
+
 
             return JSONResponse({}, HTTP_200_OK)
 
         except Exception as excc:
             return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
 
-        # {“name”: “myName”, “id”: 8, “topic”: “my
-        # topic”, “users”: [{
-        # “username”: “test”
-        # }, {
-        # “username”: “test2”
-        # }]}
-        # Tylko
-        # użytkownik
-        # który
-        # dołączył
-        # do
-        # pokoju
+class Room(HTTPEndpoint):
+    @requires('authenticated')
+    async def get(self, request):
+        try:
+            room_id = request.path_params['id']
+            #print(room_id)
+            room = commands.roomsCommands.get_a_room_by_id(db, room_id)
+
+            #print(room)
+            if room is None:
+                return JSONResponse({}, HTTP_404_NOT_FOUND)
+
+            #print(room)
+
+            room_users = commands.roomsCommands.get_users_for_room(db, room_id)
+
+            room_users_list_json = []
+
+            for room_user in room_users:
+                #print(user.get_name())
+                json_users = {'username': room_user.get_name()}
+                room_users_list_json.append(json_users)
+
+
+            json_users = {'name': room.get_unique_id(), 'id': room.get_id(),
+                          'topic': room.get_subject(),
+                          'users': room_users_list_json}
+
+            return JSONResponse(json_users, HTTP_200_OK)
+
+        except Exception as excc:
+            return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
+
+    @requires('authenticated')
+    async def patch(self, request):
+        try:
+            room_id = request.path_params['id']
+            # print(room_id)
+            room = commands.roomsCommands.get_a_room_by_id(db, room_id)
+
+            user = request.user
+
+            print(room)
+            if room is None:
+                return JSONResponse({}, HTTP_404_NOT_FOUND)
+
+            if user.get_id() != room.get_owner_id():
+                return JSONResponse({}, HTTP_403_FORBIDDEN
+                                    )
+            # {“topic”: “new
+            # topic”, “password”: “new
+            # password”}
+            #
+            # {}
+            #
+            # {“topic”: “new
+            # topic”}
+            #
+            # {“password”: “new”}
+
+
+
+            jsonData = await request.json()
+
+            if "topic" in jsonData:
+                room.set_subject(jsonData['topic'])
+                print("ttututututututtut")
+
+
+            if "password" in jsonData:
+                room.set_password(bcrypt.hashpw(str(jsonData['password']).encode(), bcrypt.gensalt()).decode())
+
+            user = request.user
+
+            print(room)
+
+            commands.roomsCommands.update_room(db, room)
+
+            room_users = commands.roomsCommands.get_users_for_room(db, room_id)
+
+            room_users_list_json = []
+
+            for room_user in room_users:
+                # print(user.get_name())
+                json_users = {'username': room_user.get_name()}
+                room_users_list_json.append(json_users)
+
+            json_users = {'name': room.get_unique_id(), 'id': room.get_id(),
+                          'topic': room.get_subject(),
+                          'users': room_users_list_json}
+
+            return JSONResponse(json_users, HTTP_200_OK)
+
+        except Exception as excc:
+            return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
+
 

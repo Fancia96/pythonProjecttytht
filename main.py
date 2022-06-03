@@ -292,11 +292,12 @@ def delete(obj, im_sure):
 def vote(obj, number):
     db = obj['db']
     room = obj['room']
+    user = obj['user']
 
     list = [0, 0.5, 1, 2, 3, 5, 8, 13, 20, 50, 100, 200, -1, -2]
 
     if number in list:
-        points = rooms_service.add_points(db, room.get_id(), number)
+        points = rooms_service.add_points(db, room.get_id(), user.get_id(), number)
         print(f"Punkty dodane - aktualne {points}")
     else:
         print(f"ZŁY NUMER {number} Można głosowac jedynie podajać poniższe wartości")

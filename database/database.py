@@ -82,7 +82,7 @@ class Database:
         room.set_id(db_room[0])
 
         room.set_subject(db_room[4])
-        room.set_points(db_room[5])
+        #room.set_points(db_room[5])
 
         return room
         #    print(user)
@@ -132,6 +132,8 @@ class Database:
         else:
             self.cur.execute("DELETE FROM room_user WHERE user_id = ?", [user.get_id()])
 
+        self.cur.execute("DELETE FROM room_vote WHERE user_id = ?", [user.get_id()])
+
         self.cur.execute("DELETE FROM user WHERE id = ?", [user.get_id()])
         self.conn.commit()
 
@@ -163,6 +165,9 @@ class Database:
     def leave_room_db(self, user_id, room_id):
 
         self.cur.execute("DELETE FROM room_user WHERE user_id = ? AND room_id = ? ", (user_id, room_id))
+
+        self.cur.execute("DELETE FROM room_vote WHERE user_id = ? AND room_id = ? ", (user_id, room_id))
+
         self.conn.commit()
 
         #array_of_rooms_users = []
@@ -286,11 +291,11 @@ class Database:
 
     def set_subject_db(self, room_id, subject):
         self.cur.execute(
-            "UPDATE room SET subject = ? , points = 0 " +
+            "UPDATE room SET subject = ? " +
             " WHERE id = ?", (subject, room_id))
 
         self.cur.execute(
-            "DELETE FROM room_subject_vote " +
+            "DELETE FROM room_vote " +
             " WHERE room_id = ?", (room_id))
 
         self.conn.commit()
@@ -303,10 +308,29 @@ class Database:
         #             return True
         #     return False
 
-    def add_points_db(self, room_id, points):
-        self.cur.execute(
-            "UPDATE room SET points = points + ? " +
-            " WHERE id = ?", (points, room_id))
+    def is_point_db(self, room_id, user_id):
+        self.cur.execute("SELECT vote FROM room_vote WHERE room_id  = ?  and user_id = ?", (room_id,user_id))
+        vote = self.cur.fetchone()
+
+        if vote[0]:
+            return True
+
+        return False
+
+    def add_points_db(self, room_id, user_id, points):
+        # self.cur.execute(
+        #     "UPDATE room SET points = points + ? " +
+        #     " WHERE id = ?", (points, room_id))
+
+
+        if(self.is_point_db(room_id, user_id)):
+            self.cur.execute(
+                "UPDATE room_vote SET vote = ? " +
+                " WHERE room_id = ? and user_id = ?", (points, room_id, user_id))
+        else:
+            self.cur.execute(
+                "INSERT INTO room_vote (room_id, user_id, vote) " +
+                "VALUES (? , ? , ?)", (room_id, user_id, points))
 
         self.conn.commit()
 
@@ -343,6 +367,8 @@ class Database:
 
         self.cur.execute("DELETE FROM room_user WHERE room_id = ?", [room.get_id()])
 
+        self.cur.execute("DELETE FROM room_vote WHERE room_id = ?", [room.get_id()])
+
         self.conn.commit()
 
         # array_of_rooms = []
@@ -373,6 +399,15 @@ class Database:
         #     for array_line in array_of_rooms_users:
         #         csv_writer.writerow(array_line)
 
+    def find_db_room_users(self, room_id):
+        self.cur.execute(" SELECT * FROM user WHERE "
+                         "id in( SELECT user_id from room_user where room_id = ? )  or "
+                         "id in ( SELECT owner_id from room where id = ? ) ", (room_id, room_id))
+
+        for db_user in self.cur.fetchall():
+            yield self.make_user_object(db_user)
+
+
     def find_db_room(self, room_name):
         # owner_id
         # INTEGER, room_name
@@ -386,16 +421,30 @@ class Database:
 
         return self.make_room_object(db_room)
 
+    def get_room_votes(self, room_id):
+        self.cur.execute(" SELECT user.name, room_vote.vote FROM room_vote "
+                         "INNER JOIN user ON user.id = room_vote.user_id WHERE room_id = ? ", [room_id])
+
+        for row in self.cur.fetchall():
+            yield {'username': row[0], 'value': row[1]}
+
+    def update_room_db(self, room: Room):
+        old_room = self.find_db_room_by_id(room.get_id())
+
+        self.cur.execute(" UPDATE room set subject = ?, password = ? WHERE id = ? ",
+                         (room.get_subject(), room.get_password().decode(), room.get_id()))
+
+        if old_room.get_subject() != room.get_subject():
+            self.cur.execute(" DELETE FROM room_vote WHERE room_id = ? ", [room.get_id()])
+
+        self.conn.commit()
+
     def find_db_room_by_id(self, room_id):
-        # owner_id
-        # INTEGER, room_name
-        # TEXT, password
-        # TEXT
         self.cur.execute(" SELECT * FROM room WHERE id = ? ", [room_id])
 
         db_room = self.cur.fetchone()
 
-        # print(db_user)
+        print(db_room)
 
         return self.make_room_object(db_room)
 
@@ -417,9 +466,9 @@ class Database:
         self.cur.execute(
             "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, password TEXT);")
         self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS room_subject_vote (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id INTEGER, user_id INTEGER, vote NUMERIC);")
+            "CREATE TABLE IF NOT EXISTS room_vote (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id INTEGER, user_id INTEGER, vote NUMERIC);")
         self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS room (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER, room_name TEXT, password TEXT, subject TEXT, points NUMERIC);")
+            "CREATE TABLE IF NOT EXISTS room (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER, room_name TEXT, password TEXT, subject TEXT);")
         self.cur.execute("CREATE TABLE IF NOT EXISTS room_user (room_id INTEGER, user_id INTEGER);")
         #self.cur.execute("INSERT INTO user (name, password) VALUES ('Fancia', 'password')")
         self.conn.commit()
@@ -428,7 +477,7 @@ class Database:
         self.cur.execute("DROP TABLE IF EXISTS user;")
         self.cur.execute("DROP TABLE IF EXISTS room;")
         self.cur.execute("DROP TABLE IF EXISTS room_user;")
-        self.cur.execute("DROP TABLE IF EXISTS room_user;")
+        self.cur.execute("DROP TABLE IF EXISTS room_vote;")
         self.conn.commit()
 
 def get_database(filepath):

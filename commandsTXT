@@ -74,3 +74,47 @@ Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUz
 POST http://localhost:5000/api/rooms/6/join
 Accept: application/json
 Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjUzNTk4NTM3fQ.OE32TVhD1vGcuKKp5mHFBK2X3iq24Bpp23SJ60mQwOQ
+
+
+POST http://localhost:5000/api/rooms/6
+Content-Type: application/json
+
+{
+  "login" : "Fancia", "password" : "Abc123@@@"
+}
+
+
+GET http://localhost:5000/api/rooms/6
+Accept: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjU0MjkyNDMyfQ.J-oYwg89AUEW_SmsWgkXmv-vHmTO0p62F2mwsNFGyRE
+
+
+
+PATCH http://localhost:5000/api/rooms/6
+Accept: application/json
+Content-Type: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjU0Mjk0NDUzfQ.ErLLMKBk-uPuXxnfhichFps5ODfgxK1WOgRBWy1RMpg
+
+{
+  "topic" : "topic 1", "password" : "Abc123@@@"
+}
+
+
+GET http://localhost:5000/api/rooms/6/vote
+Accept: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjU0Mjk2MDY5fQ.OcKczExvw1YFy5Y4GK28J6qLACdPDqFy6KPIP3IPeHI
+
+
+PUT http://localhost:5000/api/rooms/6/vote
+Content-Type: application/json
+Authorization: JWT eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjU0Mjk2MDY5fQ.OcKczExvw1YFy5Y4GK28J6qLACdPDqFy6KPIP3IPeHI
+
+{
+  "vote" : "13"
+}
+
+
+401 token expired
+
+
+https://python-2022-350915.web.app/home

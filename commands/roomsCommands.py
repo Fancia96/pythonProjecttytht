@@ -1,3 +1,4 @@
+from database.room_model import Room
 from database.user_model import User
 from rooms.rooms_service import RoomsService
 
@@ -17,3 +18,20 @@ def join_room(db, room_id, user_id):
 
 def get_a_room(db, room_id, user_id):
     rooms_service.find_room_sub_an_vote(db, room_id, user_id)
+
+def get_a_room_by_id(db, room_id):
+    return rooms_service.get_a_room_by_id_db(db, room_id)
+
+def get_users_for_room(db, room_id):
+    return rooms_service.get_users_for_room(db, room_id)
+
+def update_room(db, room: Room):
+    return rooms_service.update_room(db, room)
+
+def get_room_votes(db, room_id):
+    return rooms_service.get_room_votes(db, room_id)
+
+def vote_a_room(db, room_id, user_id, vote):
+    return rooms_service.set_room_votes(db, room_id, user_id, vote)
+
+

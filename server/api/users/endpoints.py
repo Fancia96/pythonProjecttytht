@@ -95,7 +95,10 @@ class List(HTTPEndpoint):
     async def get(self, request):
 
         try:
-            query_param_filter = request.query_params['filter']
+            query_param_filter = ""
+
+            if "filter" in request.query_params:
+                query_param_filter = request.query_params['filter']
 
             print(query_param_filter)
 
