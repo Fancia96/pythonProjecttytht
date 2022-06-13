@@ -13,20 +13,24 @@ def login(db, login, password):
     else:
         print("Zalogowano")
 
-    return
+    return user
 
-def find_all_users(db, str):
-    users_list = db.find_db_all_users(str)
+
+def find_all_users(database, str):
+    print("users_lissdsdsdssst")
+    users_list = database.find_db_all_users(str)
+
+    print("users_lisssst")
+    print(users_list)
 
     return users_list
 
-def register(db, login, password):
 
+def register(db, login, password):
     users_service.check_name(db, login)
-        #print("Haslo co najmniej 8 znaków, duże i małe litery, cyfry i znaki specjalne")
+    # print("Haslo co najmniej 8 znaków, duże i małe litery, cyfry i znaki specjalne")
     users_service.check_password(password)
 
     return users_service.register(db, login, password)
-            #obj['user'] = user
-            #click.echo("Zarejestrowano użytkownika")
-
+    # obj['user'] = user
+    # click.echo("Zarejestrowano użytkownika")

@@ -3,7 +3,7 @@ import os
 import bcrypt
 import database.database
 import expections.expections
-from commands import usersCommands
+
 from database.user_model import User
 from database.database import Database
 from expections.expections import Expection

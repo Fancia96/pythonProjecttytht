@@ -71,8 +71,6 @@ class Register(HTTPEndpoint):
                 return JSONResponse({'error': 'existing_user'}, HTTP_400_BAD_REQUEST)
             else:
                 return JSONResponse({'error': 'wrong_data'}, HTTP_400_BAD_REQUEST)
-        except:
-            return JSONResponse({'error': 'wrong_data'}, HTTP_400_BAD_REQUEST)
 
 class Refresh(HTTPEndpoint):
     @requires('authenticated')

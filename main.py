@@ -7,9 +7,10 @@ import sys
 import click
 import uvicorn
 
-import commands.usersCommands
+
 import config
 import getpass
+
 
 from commands import roomsCommands, usersCommands
 from database.user_model import User
@@ -33,7 +34,7 @@ def cli(ctx):
 @cli.command()
 @click.pass_obj
 def run_as_server(ctx):
-    uvicorn.run("server:app", host="127.0.0.1", port=5000, log_level="info")
+    uvicorn.run("server:app", host="127.0.0.1", port=6543, log_level="info")
 
 @cli.command()
 @click.pass_obj
@@ -52,7 +53,7 @@ def initialize_db(obj):
 def user(obj, login, password):
     db = obj['db']
 
-    user = commands.usersCommands.login(db, login, password)
+    user = usersCommands.login(db, login, password)
     try:
         if user is None:
             sys.exit()
@@ -71,7 +72,7 @@ def register(obj, register_name, password):
     #print(db)
     #user_service.find_all_users(db)
     try:
-        user = commands.usersCommands.register(db, register_name, password)
+        user = usersCommands.register(db, register_name, password)
         obj['user'] = user
         click.echo("Zarejestrowano użytkownika")
     except Expection as exp:
