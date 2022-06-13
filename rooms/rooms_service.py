@@ -5,8 +5,10 @@ import bcrypt
 from pip._internal import self_outdated_check
 
 import database.database
+import expections
 from database.user_model import User
 from database.room_model import Room
+from expections.expections import Expection
 
 class RoomsService:
 
@@ -73,19 +75,37 @@ class RoomsService:
         return joined_room
 
     def check_room_name(self, database, room_name, check_if_exists):
+        # alpha_numeric = "abcdefghijklmnopqrstuvwxyz0123456789"
+        #
+        # if len(room_name) == 0:
+        #     print("Nazwa pokoju nie może być pusta")
+        #     return False
+        # elif not all(c in alpha_numeric for c in room_name.lower()):
+        #     print("Nazwa pokoju musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
+        #     return False
+        # elif check_if_exists and database.find_db_room(room_name):
+        #     print("Podana nazwa pokoju już istnieje")
+        #     return False
+        #
+        # return True
         alpha_numeric = "abcdefghijklmnopqrstuvwxyz0123456789"
 
         if len(room_name) == 0:
-            print("Nazwa pokoju nie może być pusta")
-            return False
+            # print("Nazwa nie może być pusta")
+            raise Expection(expections.expections.INVALID_ROOM_DATA, "Nazwa pokoju nie może być pusta")
+            # return False
         elif not all(c in alpha_numeric for c in room_name.lower()):
-            print("Nazwa pokoju musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
-            return False
+            # print("Nazwa musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
+            raise Expection(expections.expections.INVALID_ROOM_DATA,
+                            "Nazwa pokoju musi składać się z liter a-z oraz numerow 0-9 oraz nie zawierac spacji")
+            # return False
         elif check_if_exists and database.find_db_room(room_name):
-            print("Podana nazwa pokoju już istnieje")
-            return False
+            # print("Podana nazwa użytkownika już istnieje")
+            raise Expection(expections.expections.ROOM_EXIST, "Podana nazwa pokoju już istnieje")
+            # return False
 
         return True
+
 
     def find_room(self, database, name, password, check_password):
         room = database.find_db_room(name)

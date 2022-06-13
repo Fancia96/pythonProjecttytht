@@ -1,7 +1,6 @@
 
 
 python main.py user --login Fancia
-
 python main.py user --login Fancia show-users
 
 python main.py user --login Fancia show-users --filter nci

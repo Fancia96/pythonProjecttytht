@@ -7,6 +7,14 @@ INVALID_USER = 3
 
 INVALID_USER_DATA = 4
 
+ROOM_NOT_FOUND = 5
+
+ROOM_EXIST = 6
+
+INVALID_ROOM = 7
+
+INVALID_ROOM_DATA = 8
+
 class Expection(Exception):
     def __init__(self, code, massage):
         self.code = code

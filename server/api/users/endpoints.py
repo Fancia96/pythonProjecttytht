@@ -100,11 +100,7 @@ class List(HTTPEndpoint):
             if "filter" in request.query_params:
                 query_param_filter = request.query_params['filter']
 
-            print(query_param_filter)
-
             users_list = commands.usersCommands.find_all_users(db, query_param_filter)
-
-            print(users_list)
 
             users_list_json = []
 

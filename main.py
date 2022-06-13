@@ -11,6 +11,7 @@ import commands.usersCommands
 import config
 import getpass
 
+from commands import roomsCommands, usersCommands
 from database.user_model import User
 from database.room_model import Room
 from expections.expections import Expection
@@ -52,14 +53,14 @@ def user(obj, login, password):
     db = obj['db']
 
     user = commands.usersCommands.login(db, login, password)
-    #user = user_service.login(db, login, password)
-    if user is None:
-        print("Nieprawidłowy login lub hasło")
-        sys.exit()
-        #raise Exception("Nieprawidłowy login lub hasło")
-    else:
-        print("Zalogowano")
-        obj['user'] = user
+    try:
+        if user is None:
+            sys.exit()
+        else:
+            print("Zalogowano")
+            obj['user'] = user
+    except Expection as exp:
+        print(exp.massage)
 
 @cli.command()
 @click.option("--register_name", required=True)
@@ -85,7 +86,9 @@ def show_users(obj, filter):
     db = obj['db']
     #user = obj['user']
 
-    users_list = user_service.find_all_users(db, filter)
+    print("Znalezieni użytkownicy:")
+
+    users_list = usersCommands.find_all_users(db, filter)
 
     for user in users_list:
         click.echo(user.get_name())
@@ -118,16 +121,23 @@ def create_room(obj, unique_id, password):
     db = obj['db']
     user = obj['user']
 
-    if rooms_service.check_room_name(db, unique_id, True):
-        #print("Haslo co najmniej 8 znaków, duże i małe litery, cyfry i znaki specjalne")
-        #_ask_for_room_password()
-        if user_service.check_password(password):
-            room = rooms_service.create_room(db, user, unique_id, password)
-            if room:
-                print("Pokój został utworzony")
-                room = None
-            else:
-                print("")
+    try:
+        room = roomsCommands.create_room(db, user, unique_id, password)
+        room = None
+        click.echo("Pokój został utworzony")
+    except Expection as exp:
+        print(exp.massage)
+
+    # if rooms_service.check_room_name(db, unique_id, True):
+    #     #print("Haslo co najmniej 8 znaków, duże i małe litery, cyfry i znaki specjalne")
+    #     #_ask_for_room_password()
+    #     if user_service.check_password(password):
+    #         room = rooms_service.create_room(db, user, unique_id, password)
+    #         if room:
+    #             print("Pokój został utworzony")
+    #             room = None
+    #         else:
+    #             print("")
 
 
 @user.group('room')

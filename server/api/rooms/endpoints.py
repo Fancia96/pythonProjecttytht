@@ -2,11 +2,13 @@ import bcrypt
 from starlette.authentication import requires
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import JSONResponse
-from starlette.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN
+from starlette.status import HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_404_NOT_FOUND, HTTP_403_FORBIDDEN, \
+    HTTP_201_CREATED, HTTP_409_CONFLICT
 
 import commands.roomsCommands
 import config
-
+import expections
+from expections.expections import Expection
 
 db = config.db
 
@@ -52,10 +54,13 @@ class CreateRoom(HTTPEndpoint):
 
             commands.roomsCommands.create_room(db, user, name, password)
 
-            return JSONResponse({}, HTTP_200_OK)
+            return JSONResponse({}, HTTP_201_CREATED)
 
-        except Exception as excc:
-            return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
+        except Expection as exp:
+            if exp.code == expections.expections.ROOM_EXIST:
+                return JSONResponse({'error': 'existing_room'}, HTTP_409_CONFLICT)
+            else:
+                return JSONResponse({'error': 'wrong_data'}, HTTP_400_BAD_REQUEST)
 
 
 class JoinRoom(HTTPEndpoint):
@@ -160,8 +165,6 @@ class VoteSubject(HTTPEndpoint):
 
             commands.roomsCommands.vote_a_room(db, room_id, user.get_id(), vote)
 
-
-
             return JSONResponse({}, HTTP_200_OK)
 
         except Exception as excc:
@@ -172,14 +175,10 @@ class Room(HTTPEndpoint):
     async def get(self, request):
         try:
             room_id = request.path_params['id']
-            #print(room_id)
             room = commands.roomsCommands.get_a_room_by_id(db, room_id)
 
-            #print(room)
             if room is None:
                 return JSONResponse({}, HTTP_404_NOT_FOUND)
-
-            #print(room)
 
             room_users = commands.roomsCommands.get_users_for_room(db, room_id)
 
@@ -204,7 +203,7 @@ class Room(HTTPEndpoint):
     async def patch(self, request):
         try:
             room_id = request.path_params['id']
-            # print(room_id)
+
             room = commands.roomsCommands.get_a_room_by_id(db, room_id)
 
             user = request.user
@@ -228,20 +227,17 @@ class Room(HTTPEndpoint):
             # {“password”: “new”}
 
 
-
             jsonData = await request.json()
 
             if "topic" in jsonData:
                 room.set_subject(jsonData['topic'])
-                print("ttututututututtut")
+                #print("ttututututututtut")
 
 
             if "password" in jsonData:
                 room.set_password(bcrypt.hashpw(str(jsonData['password']).encode(), bcrypt.gensalt()).decode())
 
             user = request.user
-
-            print(room)
 
             commands.roomsCommands.update_room(db, room)
 

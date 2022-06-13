@@ -152,8 +152,8 @@ class Database:
 
     def create_room(self, room: Room, user: User):
         self.cur.execute(
-            "INSERT INTO room (owner_id, room_name, password, subject, points) " +
-            "VALUES (?, ?, ? , '', 0)", (user.get_id(), room.get_unique_id(), room.get_password().decode()))
+            "INSERT INTO room (owner_id, room_name, password, subject) " +
+            "VALUES (?, ?, ? , '')", (user.get_id(), room.get_unique_id(), room.get_password().decode()))
         self.conn.commit()
 
         return self.cur.lastrowid
@@ -212,7 +212,7 @@ class Database:
         return array_of_rooms
 
     def get_my_rooms_and_room_i_joined(self, user: User):
-        self.cur.execute(" SELECT r.id, u.name as owner_id, r.room_name, r.password, r.subject, r.points FROM room r INNER JOIN user u ON u.id = r.owner_id WHERE r.owner_id = ?  OR r.id IN (SELECT room_id FROM room_user ru WHERE  ru.user_id= ? )", [user.get_id(), user.get_id()])
+        self.cur.execute(" SELECT r.id, u.name as owner_id, r.room_name, r.password, r.subject FROM room r INNER JOIN user u ON u.id = r.owner_id WHERE r.owner_id = ?  OR r.id IN (SELECT room_id FROM room_user ru WHERE  ru.user_id= ? )", [user.get_id(), user.get_id()])
 
         for db_user in self.cur.fetchall():
             #print(db_user)
@@ -312,7 +312,7 @@ class Database:
         self.cur.execute("SELECT vote FROM room_vote WHERE room_id  = ?  and user_id = ?", (room_id,user_id))
         vote = self.cur.fetchone()
 
-        if vote[0]:
+        if vote:
             return True
 
         return False

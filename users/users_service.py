@@ -3,6 +3,7 @@ import os
 import bcrypt
 import database.database
 import expections.expections
+from commands import usersCommands
 from database.user_model import User
 from database.database import Database
 from expections.expections import Expection
@@ -81,18 +82,6 @@ class UserService:
         user.set_id(user_id)
 
         return user
-
-    def find_all_users(self, database, text):
-        print("Znalezieni użytkownicy:")
-        users_list = database.find_db_all_users(text)
-
-        # list_users = []
-        #
-        # for user in users_list:
-        #     print(user.get_name())
-        #     list_users.append(user.get_name())
-
-        return users_list
 
     def find_user_by_id(self, database, id):
         user = database.find_db_user_by_id(id)

@@ -1,8 +1,10 @@
 from database.room_model import Room
 from database.user_model import User
 from rooms.rooms_service import RoomsService
+from users.users_service import UserService
 
 rooms_service = RoomsService()
+users_service = UserService()
 
 
 def get_my_rooms_and_room_i_joined(db, user: User):
@@ -11,6 +13,10 @@ def get_my_rooms_and_room_i_joined(db, user: User):
     return rooms_list
 
 def create_room(db, user: User, room_name, password):
+    rooms_service.check_room_name(db, room_name, True)
+    # print("Haslo co najmniej 8 znaków, duże i małe litery, cyfry i znaki specjalne")
+    users_service.check_password(password)
+
     rooms_service.create_room(db, user, room_name, password)
 
 def join_room(db, room_id, user_id):

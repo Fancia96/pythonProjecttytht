@@ -10,5 +10,4 @@ routes = [
     Route("/{id:int}", Room),
 
     Route("/{id:int}/vote", VoteSubject)
-    #Route("/{id:int}/vote", VoteSubject)
 ]
