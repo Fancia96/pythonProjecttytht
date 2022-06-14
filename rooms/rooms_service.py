@@ -14,7 +14,8 @@ class RoomsService:
 
     def create_room(self, database, user: User, unique_id: str, password: str):
         # TODO hash the password
-        room = Room(user.get_id(), unique_id, bcrypt.hashpw(password.encode(), bcrypt.gensalt()))
+        room = Room(owner_id=user.id, owner=user, name=unique_id,
+                    password=str(bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()))
         database.create_room(room, user)
 
         room = database.find_db_room(unique_id)
@@ -42,8 +43,8 @@ class RoomsService:
             return True
         return False
 
-    def check_if_already_joined_this_room(self, database, room_id, user_id):
-        return database.check_if_already_joined_this_room_db(room_id, user_id)
+    def check_if_already_joined_this_room(self, database, room_id, user: User):
+        return database.check_if_already_joined_this_room_db(room_id, user)
 
     def is_subject(self, database, room_id):
         return database.is_subject_db(room_id)
@@ -62,17 +63,16 @@ class RoomsService:
 
 
 
-    def leave_room(self, database, user_id, room_id):
-        database.leave_room_db(user_id, room_id)
+    def leave_room(self, database, user: User, room_id):
+        database.leave_room_db(user, room_id)
 
         left_room = database.check_if_already_joined_this_room_db(room_id, user_id)
         return left_room
 
-    def join_room(self, database, room_id, user_id):
-        database.join_room_user(room_id, user_id)
+    def join_room(self, database, room_id, user: User):
 
-        joined_room = database.check_if_already_joined_this_room_db(room_id, user_id)
-        return joined_room
+        #joined_room = database.check_if_already_joined_this_room_db(room_id, user_id)
+        return database.join_room_user(room_id, user)
 
     def check_room_name(self, database, room_name, check_if_exists):
         # alpha_numeric = "abcdefghijklmnopqrstuvwxyz0123456789"
@@ -111,7 +111,7 @@ class RoomsService:
         room = database.find_db_room(name)
 
         if check_password:
-            if room and bcrypt.checkpw(password.encode(), room.get_password()):
+            if room and bcrypt.checkpw(password.encode(), room.password.encode()):
                 return room
             else:
                 return None

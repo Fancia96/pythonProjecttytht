@@ -15,7 +15,7 @@ routes = [
 
 middleware = [Middleware(AuthenticationMiddleware, backend=APIAuthentication(), on_error=on_auth_error),
               Middleware(TrustedHostMiddleware, allowed_hosts=['*']),
-              Middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['*'], allow_headers=['*'])
+              Middleware(CORSMiddleware, allow_origins=['*'], allow_methods=['GET', 'POST', 'PATCH', 'PUT', 'DELETE'], allow_headers=['*'])
               ]
 
 app = Starlette(routes=routes, middleware=middleware, debug=True)

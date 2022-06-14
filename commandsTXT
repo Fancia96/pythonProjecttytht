@@ -16,7 +16,7 @@ python main.py user --login Fancia create-room --unique_id Pokoj3
 
 python main.py user --login Fancia room --unique_id Pokoj2 delete-room
 
-python main.py user --login Fancia room --unique_id Pokoj1 join-room
+python main.py user --login Fancia123 room --unique_id Pokoj3 join-room
 
 python main.py user --login Fancia room --unique_id Pokoj1 leave-room
 

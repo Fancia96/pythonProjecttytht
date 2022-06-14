@@ -19,8 +19,8 @@ def create_room(db, user: User, room_name, password):
 
     rooms_service.create_room(db, user, room_name, password)
 
-def join_room(db, room_id, user_id):
-    rooms_service.join_room(db, room_id, user_id)
+def join_room(db, room_id, user: User):
+    rooms_service.join_room(db, room_id, user)
 
 def get_a_room(db, room_id, user_id):
     rooms_service.find_room_sub_an_vote(db, room_id, user_id)

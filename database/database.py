@@ -1,90 +1,93 @@
-import csv
-import os
-import sys
-
 import bcrypt
-import sqlite3
-from os.path import exists
+
+from sqlalchemy import create_engine
+from sqlalchemy.engine import Engine
+from sqlalchemy.orm import sessionmaker, Session
+
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
 
 from database.user_model import User
 from database.room_model import Room
-current_dir = os.path.dirname(os.path.abspath(sys.argv[0]))
-#print(current_dir)
-#print(os.path.join(current_dir, "../db_users.csv"))
-db_users_path = os.path.join(current_dir, "db_users.csv")
-db_rooms_path = os.path.join(current_dir, "db_rooms.csv")
-db_rooms_users_path = os.path.join(current_dir, "db_rooms_users.csv")
 
 class Database:
 
-    def __init__(self, connection):
+    def __init__(self, engine: Engine):
+        self.engine: Engine = engine
+        self.session: Session = sessionmaker(bind=engine)()
 
-        self.conn = connection
-        self.cur = connection.cursor()
-
-        self.create_tables()
-
-    def check_db_exist(self, path):
-        try:
-            os.stat(path)
-        except FileNotFoundError:
-            f = open(path, "w")
-            f.close()
+    # def check_db_exist(self, path):
+    #     try:
+    #         os.stat(path)
+    #     except FileNotFoundError:
+    #         f = open(path, "w")
+    #         f.close()
 
     def write_db_user(self, user: User):
-        self.cur.execute(
-            "INSERT INTO user (name, password) "+
-            "VALUES (? , ? )", (user.get_name(), user.get_password().decode()))
-        self.conn.commit()
-
-        return self.cur.lastrowid
+        self.session.add(user)
+        self.session.commit()
+        return user
+        # self.cur.execute(
+        #     "INSERT INTO user (name, password) "+
+        #     "VALUES (? , ? )", (user.get_name(), user.get_password().decode()))
+        # self.conn.commit()
+        #
+        # return self.cur.lastrowid
 
         # with open(db_users_path, 'a', newline='') as file:
         #     csv_writer = csv.writer(file)
         #     csv_writer.writerow([user.get_name(), user.get_password().decode()])
 
     def find_db_user_by_id(self, id):
+        query = self.session.query(User)
+        query = query.where(User.id == id)
+
+        return query.first()
+
         # print(user_name)
-        self.cur.execute(" SELECT * FROM user WHERE user.id = ? ", [id])
-
-        db_user = self.cur.fetchone()
-
+        # self.cur.execute(" SELECT * FROM user WHERE user.id = ? ", [id])
+        #
+        # db_user = self.cur.fetchone()
         # print(db_user)
-
-        return self.make_user_object(db_user)
+        # return self.make_user_object(db_user)
 
     def find_db_user(self, user_name: str):
+        query = self.session.query(User)
+        query = query.where(User.username == user_name)
+
+        return query.first()
+
         #print(user_name)
-        self.cur.execute(" SELECT * FROM user WHERE name LIKE ? ", [user_name])
+        # self.cur.execute(" SELECT * FROM user WHERE name LIKE ? ", [user_name])
+        #
+        # db_user = self.cur.fetchone()
+        #
+        # #print(db_user)
+        #
+        # return self.make_user_object(db_user)
 
-        db_user = self.cur.fetchone()
+    # def make_user_object(self, db_user):
+    #     if not db_user:
+    #         return None
+    #
+    #     user = User(db_user[1], db_user[2].encode())
+    #     user.set_id(db_user[0])
+    #
+    #     return user
 
-        #print(db_user)
-
-        return self.make_user_object(db_user)
-
-    def make_user_object(self, db_user):
-        if not db_user:
-            return None
-
-        user = User(db_user[1], db_user[2].encode())
-        user.set_id(db_user[0])
-
-        return user
-
-    def make_room_object(self, db_room):
-        if not db_room:
-            return None
-
-        #print(db_room)
-
-        room = Room(db_room[1], db_room[2], db_room[3].encode())
-        room.set_id(db_room[0])
-
-        room.set_subject(db_room[4])
-        #room.set_points(db_room[5])
-
-        return room
+    # def make_room_object(self, db_room):
+    #     if not db_room:
+    #         return None
+    #
+    #     #print(db_room)
+    #
+    #     room = Room(db_room[1], db_room[2], db_room[3].encode())
+    #     room.set_id(db_room[0])
+    #
+    #     room.set_subject(db_room[4])
+    #     #room.set_points(db_room[5])
+    #
+    #     return room
         #    print(user)
         #
         # with open(db_users_path, 'r', newline='') as file:
@@ -99,13 +102,13 @@ class Database:
     #     self.cur.fetchone()
 
     def find_db_all_users(self, filter_string):
-        if not filter_string or len(filter_string) == 0:
-            self.cur.execute("SELECT * FROM  user ;")
-        else:
-            self.cur.execute("SELECT * FROM  user WHERE name LIKE ?", ["%"+filter_string+"%"])
+        query = self.session.query(User)
 
-        for db_user in self.cur.fetchall():
-            yield self.make_user_object(db_user)
+        if len(filter_string) > 0:
+            query = query.filter(User.username.like("%"+filter_string+"%"))
+
+        for user in query.all():
+            yield user
 
 
         # with open(db_users_path, 'r', newline='') as file:
@@ -151,12 +154,16 @@ class Database:
         #         csv_writer.writerow(array_line)
 
     def create_room(self, room: Room, user: User):
-        self.cur.execute(
-            "INSERT INTO room (owner_id, room_name, password, subject) " +
-            "VALUES (?, ?, ? , '')", (user.get_id(), room.get_unique_id(), room.get_password().decode()))
-        self.conn.commit()
-
-        return self.cur.lastrowid
+        self.session.add(room)
+        room.users.append(user)
+        self.session.commit()
+        # self.cur.execute(
+        #     "INSERT INTO room (owner_id, room_name, password, subject) " +
+        #     "VALUES (?, ?, ? , '')", (user.get_id(), room.get_unique_id(), room.get_password().decode()))
+        # self.conn.commit()
+        #
+        # return self.cur.lastrowid
+        return room
         # with open(db_rooms_path, 'a', newline='') as file:
         #     csv_writer = csv.writer(file)
         #     csv_writer.writerow([user.get_name(), room.get_unique_id(), room.get_password().decode()])
@@ -183,11 +190,22 @@ class Database:
         #     for array_line in array_of_rooms_users:
         #         csv_writer.writerow(array_line)
 
-    def join_room_user(self, room_id, user_id):
-        self.cur.execute(
-            "INSERT INTO room_user (room_id, user_id) " +
-            "VALUES (? , ? )", (room_id, user_id))
-        self.conn.commit()
+    def join_room_user(self, room_id, user: User):
+        query = self.session.query(Room).where(Room.id == room_id)
+
+        room = query.first()
+
+        if room and not room.users.filter(User.id == user.id).first():
+            room.users.append(user)
+            self.session.add(room)
+            self.session.commit()
+            return True
+        return False
+
+        # self.cur.execute(
+        #     "INSERT INTO room_user (room_id, user_id) " +
+        #     "VALUES (? , ? )", (room_id, user_id))
+        # self.conn.commit()
 
         # with open(db_rooms_users_path, 'a', newline='') as file:
         #     csv_writer = csv.writer(file)
@@ -212,11 +230,16 @@ class Database:
         return array_of_rooms
 
     def get_my_rooms_and_room_i_joined(self, user: User):
-        self.cur.execute(" SELECT r.id, u.name as owner_id, r.room_name, r.password, r.subject FROM room r INNER JOIN user u ON u.id = r.owner_id WHERE r.owner_id = ?  OR r.id IN (SELECT room_id FROM room_user ru WHERE  ru.user_id= ? )", [user.get_id(), user.get_id()])
+        query = self.session.query(Room)
+        query = query.filter(
+            Room.users.any(User.id == user.id)
+        )
 
-        for db_user in self.cur.fetchall():
+        #self.cur.execute(" SELECT r.id, u.name as owner_id, r.room_name, r.password, r.subject FROM room r INNER JOIN user u ON u.id = r.owner_id WHERE r.owner_id = ?  OR r.id IN (SELECT room_id FROM room_user ru WHERE  ru.user_id= ? )", [user.get_id(), user.get_id()])
+
+        for room in query.all():
             #print(db_user)
-            yield self.make_room_object(db_user)
+            yield room
 
 
     def get_my_rooms(self, user: User):
@@ -271,14 +294,22 @@ class Database:
 
         return array_of_rooms
 
-    def check_if_already_joined_this_room_db(self, room_id, user_id):
-        self.cur.execute("SELECT * FROM room_user WHERE user_id = ? AND room_id = ?", (user_id, room_id))
-        record = self.cur.fetchone()
+    def check_if_already_joined_this_room_db(self, room_id, user: User):
+        query = self.session.query(Room).where(Room.id == room_id)
+        room = query.first()
 
-        if record is None:
-            return False
+        if room and room.users.filter(User.id == user.id).first():
+            return True
+        return False
 
-        return True
+
+        # self.cur.execute("SELECT * FROM room_user WHERE user_id = ? AND room_id = ?", (user_id, room_id))
+        # record = self.cur.fetchone()
+        #
+        # if record is None:
+        #     return False
+        #
+        # return True
 
     def is_subject_db(self, room_id):
         self.cur.execute("SELECT subject FROM room WHERE id  = ? ", [room_id])
@@ -363,11 +394,11 @@ class Database:
 
     def delete_room_db(self, room: Room, user: User):
 
-        self.cur.execute("DELETE FROM room WHERE id = ?", [room.get_id()])
+        self.cur.execute("DELETE FROM room WHERE id = ?", [room.id])
 
-        self.cur.execute("DELETE FROM room_user WHERE room_id = ?", [room.get_id()])
+        self.cur.execute("DELETE FROM room_user WHERE room_id = ?", [room.id])
 
-        self.cur.execute("DELETE FROM room_vote WHERE room_id = ?", [room.get_id()])
+        self.cur.execute("DELETE FROM room_vote WHERE room_id = ?", [room.id])
 
         self.conn.commit()
 
@@ -409,17 +440,21 @@ class Database:
 
 
     def find_db_room(self, room_name):
+        query = self.session.query(Room)
+        query = query.where(Room.name == room_name)
+
+        return query.first()
         # owner_id
         # INTEGER, room_name
         # TEXT, password
         # TEXT
-        self.cur.execute(" SELECT * FROM room WHERE room_name LIKE ? ", [room_name])
-
-        db_room = self.cur.fetchone()
-
-        # print(db_user)
-
-        return self.make_room_object(db_room)
+        # self.cur.execute(" SELECT * FROM room WHERE room_name LIKE ? ", [room_name])
+        #
+        # db_room = self.cur.fetchone()
+        #
+        # # print(db_user)
+        #
+        # return self.make_room_object(db_room)
 
     def get_room_votes(self, room_id):
         self.cur.execute(" SELECT user.name, room_vote.vote FROM room_vote "
@@ -429,24 +464,27 @@ class Database:
             yield {'username': row[0], 'value': row[1]}
 
     def update_room_db(self, room: Room):
-        old_room = self.find_db_room_by_id(room.get_id())
+        old_room = self.find_db_room_by_id(room.id)
 
         self.cur.execute(" UPDATE room set subject = ?, password = ? WHERE id = ? ",
-                         (room.get_subject(), room.get_password().decode(), room.get_id()))
+                         (room.get_subject(), room.get_password().decode(), room.id))
 
         if old_room.get_subject() != room.get_subject():
-            self.cur.execute(" DELETE FROM room_vote WHERE room_id = ? ", [room.get_id()])
+            self.cur.execute(" DELETE FROM room_vote WHERE room_id = ? ", [room.id])
 
         self.conn.commit()
 
     def find_db_room_by_id(self, room_id):
-        self.cur.execute(" SELECT * FROM room WHERE id = ? ", [room_id])
+        query = self.session.query(Room)
+        query = query.where(Room.id == room_id)
+        # self.cur.execute(" SELECT * FROM room WHERE id = ? ", [room_id])
+        #
+        # db_room = self.cur.fetchone()
+        #
+        # print(db_room)
 
-        db_room = self.cur.fetchone()
-
-        print(db_room)
-
-        return self.make_room_object(db_room)
+        #return self.make_room_object(db_room)
+        return query.first()
 
         # with open(db_rooms_path, 'r', newline='') as file:
         #     csv_reader = csv.reader(file)
@@ -462,25 +500,31 @@ class Database:
         for user in self.cur.fetchall():
             print(user)
 
+    # def create_tables(self):
+    #     self.cur.execute(
+    #         "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, password TEXT);")
+    #     self.cur.execute(
+    #         "CREATE TABLE IF NOT EXISTS room_vote (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id INTEGER, user_id INTEGER, vote NUMERIC);")
+    #     self.cur.execute(
+    #         "CREATE TABLE IF NOT EXISTS room (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER, room_name TEXT, password TEXT, subject TEXT);")
+    #     self.cur.execute("CREATE TABLE IF NOT EXISTS room_user (room_id INTEGER, user_id INTEGER);")
+    #     #self.cur.execute("INSERT INTO user (name, password) VALUES ('Fancia', 'password')")
+    #     self.conn.commit()
+
+    # def delete_tables(self):
+    #     self.cur.execute("DROP TABLE IF EXISTS user;")
+    #     self.cur.execute("DROP TABLE IF EXISTS room;")
+    #     self.cur.execute("DROP TABLE IF EXISTS room_user;")
+    #     self.cur.execute("DROP TABLE IF EXISTS room_vote;")
+    #     self.conn.commit()
+    #
     def create_tables(self):
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS user (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, password TEXT);")
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS room_vote (id INTEGER PRIMARY KEY AUTOINCREMENT, room_id INTEGER, user_id INTEGER, vote NUMERIC);")
-        self.cur.execute(
-            "CREATE TABLE IF NOT EXISTS room (id INTEGER PRIMARY KEY AUTOINCREMENT, owner_id INTEGER, room_name TEXT, password TEXT, subject TEXT);")
-        self.cur.execute("CREATE TABLE IF NOT EXISTS room_user (room_id INTEGER, user_id INTEGER);")
-        #self.cur.execute("INSERT INTO user (name, password) VALUES ('Fancia', 'password')")
-        self.conn.commit()
+        Base.metadata.create_all(self.engine)
 
     def delete_tables(self):
-        self.cur.execute("DROP TABLE IF EXISTS user;")
-        self.cur.execute("DROP TABLE IF EXISTS room;")
-        self.cur.execute("DROP TABLE IF EXISTS room_user;")
-        self.cur.execute("DROP TABLE IF EXISTS room_vote;")
-        self.conn.commit()
+        Base.metadata.drop_all(self.engine)
 
 def get_database(filepath):
-    connection = sqlite3.connect(filepath)
+    engine = create_engine("sqlite:///{}".format(filepath), echo=True)
+    return Database(engine)
 
-    return Database(connection)

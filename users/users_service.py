@@ -15,7 +15,7 @@ class UserService:
     def login(self, database, name, password):
         user = database.find_db_user(name)
 
-        if user and bcrypt.checkpw(password.encode(), user.get_password()):
+        if user and bcrypt.checkpw(password.encode(), user.password.encode()):
             return user
         else:
             return None
@@ -77,11 +77,10 @@ class UserService:
 
     def register(self, database, name, password):
         # TODO hash the password
-        user = User(name, bcrypt.hashpw(password.encode(), bcrypt.gensalt()))
-        user_id = database.write_db_user(user)
-        user.set_id(user_id)
+        user = User(username=name)
+        user.password = str(bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode())
 
-        return user
+        return database.write_db_user(user)
 
     def find_user_by_id(self, database, id):
         user = database.find_db_user_by_id(id)

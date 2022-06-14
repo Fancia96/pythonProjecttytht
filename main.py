@@ -156,7 +156,7 @@ def room(obj, unique_id):
         sys.exit()
         #raise Exception("Nieprawidłowy login lub hasło")
     else:
-        if rooms_service.check_if_already_joined_this_room(db, room.get_id(), user.get_id()) or rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+        if rooms_service.check_if_already_joined_this_room(db, room.id, user) or room.owner_id == user.id:
             print("Prawidłowe dane pokoju")
             obj['room'] = room
         else:
@@ -168,7 +168,7 @@ def room(obj, unique_id):
             else:
                 print("Prawidłowe dane pokoju")
 
-                joined = rooms_service.join_room(db, room_2.get_id(), user.get_id())
+                joined = rooms_service.join_room(db, room_2.id, user)
 
                 if joined:
                     print("Dołączono do pokoju")
@@ -206,9 +206,9 @@ def join_room(obj):
 #     if not rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
 #
 #         # check if you already joned this room
-#         if not rooms_service.check_if_already_joined_this_room(db, room.get_id(), user.get_id()):
+#         if not rooms_service.check_if_already_joined_this_room(db, room.id, user.get_id()):
 #
-#             joined = rooms_service.join_room(db, room.get_id(), user.get_id())
+#             joined = rooms_service.join_room(db, room.id, user.get_id())
 #
 #             if joined:
 #                 print("Dołączono do pokoju")
@@ -231,9 +231,9 @@ def leave_room(obj):
     if not rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
 
         # check if you already joned this room
-        if rooms_service.check_if_already_joined_this_room(db, room.get_id(), user.get_id()):
+        if rooms_service.check_if_already_joined_this_room(db, room.id, user):
 
-            left_room = rooms_service.leave_room(db, user.get_id(), room.get_id())
+            left_room = rooms_service.leave_room(db, user, room.id)
 
             if not left_room:
                 print("Opuszczono pokój")
@@ -266,9 +266,9 @@ def set(obj, subject):
     # check if you are owner
     if rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
 
-        #is_subject = rooms_service.is_subject(db, room.get_id())
+        #is_subject = rooms_service.is_subject(db, room.id)
 
-        complete = rooms_service.set_subject(db, room.get_id(), subject)
+        complete = rooms_service.set_subject(db, room.id, subject)
         if complete:
             print("Temat ustawiony")
     else:
@@ -291,7 +291,7 @@ def delete(obj, im_sure):
     # check if you are owner
     if rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
 
-        complete = rooms_service.set_subject(db, room.get_id(), '')
+        complete = rooms_service.set_subject(db, room.id, '')
         if complete:
             print("Temat usunięty")
     else:
@@ -308,7 +308,7 @@ def vote(obj, number):
     list = [0, 0.5, 1, 2, 3, 5, 8, 13, 20, 50, 100, 200, -1, -2]
 
     if number in list:
-        points = rooms_service.add_points(db, room.get_id(), user.get_id(), number)
+        points = rooms_service.add_points(db, room.id, user.get_id(), number)
         print(f"Punkty dodane - aktualne {points}")
     else:
         print(f"ZŁY NUMER {number} Można głosowac jedynie podajać poniższe wartości")

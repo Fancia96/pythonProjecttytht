@@ -27,8 +27,8 @@ class MyRooms(HTTPEndpoint):
             rooms_list_json = []
 
             for room in rooms_list:
-                print(user.get_name())
-                json_users = {'name': room.get_unique_id(), 'id': room.get_id(), 'owner': room.get_owner_id()}
+                print(room.name)
+                json_users = {'name': room.name, 'id': room.id, 'owner': room.owner.username}
                 rooms_list_json.append(json_users)
 
 
@@ -72,7 +72,7 @@ class JoinRoom(HTTPEndpoint):
 
             user = request.user
 
-            commands.roomsCommands.join_room(db, room_id, user.get_id())
+            commands.roomsCommands.join_room(db, room_id, user)
 
             return JSONResponse({}, HTTP_200_OK)
 
@@ -96,7 +96,7 @@ class JoinRoom(HTTPEndpoint):
 #
 #             for room in rooms_list:
 #                 print(user.get_name())
-#                 json_users = {'name': room.get_unique_id(), 'id': room.get_id(), 'topic': room.get_owner_id(), 'users': [{'username':'hhhhh', 'username':'fffff'}], }
+#                 json_users = {'name': room.get_unique_id(), 'id': room.id, 'topic': room.get_owner_id(), 'users': [{'username':'hhhhh', 'username':'fffff'}], }
 #                 rooms_list_json.append(json_users)
 #
 #             return JSONResponse({}, HTTP_200_OK)
@@ -180,18 +180,18 @@ class Room(HTTPEndpoint):
             if room is None:
                 return JSONResponse({}, HTTP_404_NOT_FOUND)
 
-            room_users = commands.roomsCommands.get_users_for_room(db, room_id)
+            #room_users = commands.roomsCommands.get_users_for_room(db, room_id)
 
             room_users_list_json = []
 
-            for room_user in room_users:
+            for user in room.users.all():
                 #print(user.get_name())
-                json_users = {'username': room_user.get_name()}
+                json_users = {'username': user.username}
                 room_users_list_json.append(json_users)
 
 
-            json_users = {'name': room.get_unique_id(), 'id': room.get_id(),
-                          'topic': room.get_subject(),
+            json_users = {'name': room.name, 'id': room.id,
+                          'topic': room.topic,
                           'users': room_users_list_json}
 
             return JSONResponse(json_users, HTTP_200_OK)
@@ -250,7 +250,7 @@ class Room(HTTPEndpoint):
                 json_users = {'username': room_user.get_name()}
                 room_users_list_json.append(json_users)
 
-            json_users = {'name': room.get_unique_id(), 'id': room.get_id(),
+            json_users = {'name': room.get_unique_id(), 'id': room.id,
                           'topic': room.get_subject(),
                           'users': room_users_list_json}
 

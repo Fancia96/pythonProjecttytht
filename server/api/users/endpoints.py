@@ -42,8 +42,13 @@ class Login(HTTPEndpoint):
                 return JSONResponse({}, HTTP_401_UNAUTHORIZED)
 
             #return PlainTextResponse(f"Hello, weeeorld! " + jsonData['login'])
+        except Expection as exp:
+            return JSONResponse({'error': exp.massage}, HTTP_400_BAD_REQUEST)
         except Exception as excc:
             return JSONResponse({'error': excc}, HTTP_400_BAD_REQUEST)
+
+
+
 
 # class CreateRoom(HTTPEndpoint):
 #     async def post(self, request):
@@ -86,7 +91,7 @@ class Refresh(HTTPEndpoint):
 
 
 def createToken(user: User):
-    return jwt.encode({'id': user.get_id(), 'exp': datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=15)}, secretto, algorithm="HS256")
+    return jwt.encode({'id': user.id, 'exp': datetime.datetime.now(tz=datetime.timezone.utc) + datetime.timedelta(minutes=15)}, secretto, algorithm="HS256")
 
 class List(HTTPEndpoint):
     @requires('authenticated')
@@ -103,8 +108,8 @@ class List(HTTPEndpoint):
             users_list_json = []
 
             for user in users_list:
-                print(user.get_name())
-                json_users = {'username': user.get_name()}
+                print(user.username)
+                json_users = {'username': user.username}
                 users_list_json.append(json_users)
             # create json
 

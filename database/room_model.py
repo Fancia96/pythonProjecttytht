@@ -1,14 +1,25 @@
-import bcrypt
+from sqlalchemy import Column, Integer, String, ForeignKey, Table, Numeric
+from sqlalchemy.orm import relationship
 
+from database.database import Base
 
-class Room:
-    def __init__(self, owner_id, unique_id: str, password: str):
-        self.id = None
-        self.owner_id = owner_id
-        self.unique_id = unique_id
-        self.password = password
-        self.subject = ""
-        #self.points = 0
+room_user_table = Table(
+    'room_user',
+    Base.metadata,
+    Column('room_id', ForeignKey('room.id'), primary_key=True),
+    Column('user_id', ForeignKey('user.id'), primary_key=True)
+)
+
+class Room(Base):
+    __tablename__ = 'room'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String)
+    password = Column(String)
+    owner_id = Column(Integer, ForeignKey('user.id'))
+    owner = relationship('User')
+    topic = Column(String)
+    votes = relationship('RoomVote', back_populates='room')
+    users = relationship('User', secondary=room_user_table, back_populates="rooms", lazy="dynamic")
 
     def get_unique_id(self):
         return self.unique_id
@@ -45,3 +56,16 @@ class Room:
 
     #def set_points(self, points):
     #    self.points = points
+
+
+class RoomVote(Base):
+    __tablename__ = 'room_vote'
+    id = Column(Integer, primary_key=True, autoincrement=True)
+
+    room_id = Column(Integer, ForeignKey('room.id'))
+    room = relationship('Room', back_populates="votes")
+
+    user = relationship('User')
+    user_id = Column(Integer, ForeignKey('user.id'))
+    
+    vote = Column(Numeric)
