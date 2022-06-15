@@ -91,6 +91,8 @@ class UserService:
             return None
 
     def delete_user(self, database, user: User):
+
+        name = user.username
         database.delete_db_user(user)
 
         #delete all rooms and users in
@@ -100,5 +102,5 @@ class UserService:
         #
         # database.delete_my_room_connections(user)
 
-        user = database.find_db_user(user.get_name())
+        user = database.find_db_user(name)
         return user

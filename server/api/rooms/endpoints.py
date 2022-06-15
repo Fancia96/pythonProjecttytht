@@ -125,7 +125,7 @@ class VoteSubject(HTTPEndpoint):
 
             user = request.user
 
-            room_votes_list = commands.roomsCommands.get_room_votes(db, room_id)
+            room_votes_list = []#commands.roomsCommands.get_room_votes(db, room_id)
 
             # {
             # “votes”: [{
@@ -134,7 +134,11 @@ class VoteSubject(HTTPEndpoint):
             # }]
             # }
 
-            print(room_votes_list)
+            room = commands.roomsCommands.get_a_room_by_id(db, room_id)
+            if room is None:
+                return JSONResponse({}, HTTP_404_NOT_FOUND)
+
+            #print(room_votes_list)
 
             # room_users_list_json = []
             #
@@ -143,7 +147,10 @@ class VoteSubject(HTTPEndpoint):
             #     json_users = {'username': room_vote.get, 'value': }
             #     room_users_list_json.append(json_users)
 
-            json_users = {'votes': list(room_votes_list)}
+            for vote in room.votes.all():
+                room_votes_list.append({'username': vote.user.username, 'value': float(vote.vote)})
+
+            json_users = {'votes': room_votes_list}
 
             return JSONResponse(json_users, HTTP_200_OK)
 
@@ -163,7 +170,11 @@ class VoteSubject(HTTPEndpoint):
 
             #{“vote”: 0.5}
 
-            commands.roomsCommands.vote_a_room(db, room_id, user.get_id(), vote)
+            room = commands.roomsCommands.get_a_room_by_id(db, room_id)
+            if room is None:
+                return JSONResponse({}, HTTP_404_NOT_FOUND)
+
+            commands.roomsCommands.vote_a_room(db, room, user, vote)
 
             return JSONResponse({}, HTTP_200_OK)
 
@@ -212,7 +223,7 @@ class Room(HTTPEndpoint):
             if room is None:
                 return JSONResponse({}, HTTP_404_NOT_FOUND)
 
-            if user.get_id() != room.get_owner_id():
+            if user.id != room.owner_id:
                 return JSONResponse({}, HTTP_403_FORBIDDEN
                                     )
             # {“topic”: “new
@@ -229,29 +240,31 @@ class Room(HTTPEndpoint):
 
             jsonData = await request.json()
 
-            if "topic" in jsonData:
-                room.set_subject(jsonData['topic'])
+            subjectChanged = False
+            if "topic" in jsonData and jsonData['topic'] != room.topic:
+                room.topic = jsonData['topic']
+                subjectChanged = True
                 #print("ttututututututtut")
 
 
             if "password" in jsonData:
-                room.set_password(bcrypt.hashpw(str(jsonData['password']).encode(), bcrypt.gensalt()).decode())
+                room.password = bcrypt.hashpw(str(jsonData['password']).encode(), bcrypt.gensalt()).decode()
 
             user = request.user
 
-            commands.roomsCommands.update_room(db, room)
+            commands.roomsCommands.update_room(db, room, subjectChanged)
 
-            room_users = commands.roomsCommands.get_users_for_room(db, room_id)
+            #room_users = commands.roomsCommands.get_users_for_room(db, room_id)
 
             room_users_list_json = []
 
-            for room_user in room_users:
+            for user in room.users.all():
                 # print(user.get_name())
-                json_users = {'username': room_user.get_name()}
+                json_users = {'username': user.username}
                 room_users_list_json.append(json_users)
 
-            json_users = {'name': room.get_unique_id(), 'id': room.id,
-                          'topic': room.get_subject(),
+            json_users = {'name': room.name, 'id': room.id,
+                          'topic': room.topic,
                           'users': room_users_list_json}
 
             return JSONResponse(json_users, HTTP_200_OK)

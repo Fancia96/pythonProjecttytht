@@ -3,7 +3,7 @@ import datetime
 from starlette.authentication import requires
 from starlette.endpoints import HTTPEndpoint
 from starlette.responses import PlainTextResponse, JSONResponse
-from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_400_BAD_REQUEST, HTTP_200_OK
+from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_400_BAD_REQUEST, HTTP_200_OK, HTTP_409_CONFLICT
 
 import commands.usersCommands
 import config
@@ -73,7 +73,7 @@ class Register(HTTPEndpoint):
             # return PlainTextResponse(f"Hello, weeeorld! " + jsonData['login'])
         except Expection as exp:
             if exp.code == expections.expections.USER_EXIST:
-                return JSONResponse({'error': 'existing_user'}, HTTP_400_BAD_REQUEST)
+                return JSONResponse({'error': 'existing_user'}, HTTP_409_CONFLICT)
             else:
                 return JSONResponse({'error': 'wrong_data'}, HTTP_400_BAD_REQUEST)
 

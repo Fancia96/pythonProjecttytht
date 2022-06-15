@@ -31,13 +31,6 @@ class RoomsService:
         else:
             return False
 
-    def add_points(self, database, room_id, user_id, points):
-        # TODO hash the password
-
-        database.add_points_db(room_id, user_id, points)
-
-        return database.find_db_room_by_id(room_id).get_points()
-
     def are_you_room_owner(self, user_iq, room_owner_id):
         if user_iq == room_owner_id:
             return True
@@ -53,9 +46,9 @@ class RoomsService:
 #first checked if you are owner
     def delete_room(self, database, room: Room, user: User):
 
-        if self.are_you_room_owner(user.get_id(), room.get_owner_id()):
+        if self.are_you_room_owner(user.id, room.owner_id):
             database.delete_room_db(room, user)
-            room = database.find_db_room(room.get_unique_id())
+            room = database.find_db_room(room.name)
             return room
         else:
             print("Nie jesteś wlascicielem pokoju")
@@ -63,10 +56,10 @@ class RoomsService:
 
 
 
-    def leave_room(self, database, user: User, room_id):
-        database.leave_room_db(user, room_id)
+    def leave_room(self, database, user: User, room: Room):
+        database.leave_room_db(user, room)
 
-        left_room = database.check_if_already_joined_this_room_db(room_id, user_id)
+        left_room = database.check_if_already_joined_this_room_db(room.id, user)
         return left_room
 
     def join_room(self, database, room_id, user: User):
@@ -144,8 +137,8 @@ class RoomsService:
 
         return room
 
-    def update_room(self, database, room: Room):
-        room = database.update_room_db(room)
+    def update_room(self, database, room: Room, subjectChanged):
+        room = database.update_room_db(room, subjectChanged)
 
         return room
 
@@ -159,7 +152,7 @@ class RoomsService:
 
         return room
 
-    def set_room_votes(self, database, room_id, user_id, points):
-        room = database.add_points_db(room_id, user_id, points)
+    def set_room_votes(self, database, room: Room, user: User, points):
+        room = database.add_points_db(room, user, points)
 
         return room

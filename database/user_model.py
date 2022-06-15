@@ -12,7 +12,7 @@ class User(Base, SimpleUser):
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String)
     password = Column(String)
-    rooms = relationship('Room', secondary=room_user_table, back_populates="users")
+    rooms = relationship('Room', secondary=room_user_table, back_populates="users", lazy="dynamic")
 
     def get_name(self):
         return self.name

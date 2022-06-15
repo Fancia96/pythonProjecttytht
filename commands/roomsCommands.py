@@ -31,13 +31,13 @@ def get_a_room_by_id(db, room_id):
 def get_users_for_room(db, room_id):
     return rooms_service.get_users_for_room(db, room_id)
 
-def update_room(db, room: Room):
-    return rooms_service.update_room(db, room)
+def update_room(db, room: Room, subjectChanged):
+    return rooms_service.update_room(db, room, subjectChanged)
 
 def get_room_votes(db, room_id):
     return rooms_service.get_room_votes(db, room_id)
 
-def vote_a_room(db, room_id, user_id, vote):
-    return rooms_service.set_room_votes(db, room_id, user_id, vote)
+def vote_a_room(db, room: Room, user: User, vote):
+    return rooms_service.set_room_votes(db, room, user, vote)
 
 

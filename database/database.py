@@ -8,7 +8,8 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 
 from database.user_model import User
-from database.room_model import Room
+from database.room_model import Room, RoomVote
+
 
 class Database:
 
@@ -120,25 +121,37 @@ class Database:
         #             print(line[0])
 
     def delete_db_user(self, user: User):
-        rooms = []
-        self.cur.execute("SELECT * FROM room WHERE owner_id = ?", [user.get_id()])
-
-        for db_room in self.cur.fetchall():
-            rooms.append(db_room[0])
-
-        self.cur.execute("DELETE FROM room WHERE owner_id = ?", [user.get_id()])
-
-        l = len(rooms)
-        if l > 0:
-            rooms.insert(0, user.get_id())
-            self.cur.execute('DELETE FROM room_user WHERE user_id = ? OR room_id IN (%s)' % ','.join('?' * l), rooms)
-        else:
-            self.cur.execute("DELETE FROM room_user WHERE user_id = ?", [user.get_id()])
-
-        self.cur.execute("DELETE FROM room_vote WHERE user_id = ?", [user.get_id()])
-
-        self.cur.execute("DELETE FROM user WHERE id = ?", [user.get_id()])
-        self.conn.commit()
+        for room in user.rooms.all():
+            if room.owner_id == user.id:
+                self.session.delete(room)
+            else:
+                room.users.remove(user)
+                for vote in room.votes:
+                    if vote.user.id == user.id:
+                        self.session.delete(vote)
+                        break
+                self.session.add(room)
+        self.session.delete(user)
+        self.session.commit()
+        # rooms = []
+        # self.cur.execute("SELECT * FROM room WHERE owner_id = ?", [user.get_id()])
+        #
+        # for db_room in self.cur.fetchall():
+        #     rooms.append(db_room[0])
+        #
+        # self.cur.execute("DELETE FROM room WHERE owner_id = ?", [user.get_id()])
+        #
+        # l = len(rooms)
+        # if l > 0:
+        #     rooms.insert(0, user.get_id())
+        #     self.cur.execute('DELETE FROM room_user WHERE user_id = ? OR room_id IN (%s)' % ','.join('?' * l), rooms)
+        # else:
+        #     self.cur.execute("DELETE FROM room_user WHERE user_id = ?", [user.get_id()])
+        #
+        # self.cur.execute("DELETE FROM room_vote WHERE user_id = ?", [user.get_id()])
+        #
+        # self.cur.execute("DELETE FROM user WHERE id = ?", [user.get_id()])
+        # self.conn.commit()
 
         #array_of_users = []
 
@@ -169,13 +182,16 @@ class Database:
         #     csv_writer.writerow([user.get_name(), room.get_unique_id(), room.get_password().decode()])
 
 
-    def leave_room_db(self, user_id, room_id):
+    def leave_room_db(self, user: User, room: Room):
+        room.users.remove(user)
+        self.session.add(room)
+        self.session.commit()
 
-        self.cur.execute("DELETE FROM room_user WHERE user_id = ? AND room_id = ? ", (user_id, room_id))
-
-        self.cur.execute("DELETE FROM room_vote WHERE user_id = ? AND room_id = ? ", (user_id, room_id))
-
-        self.conn.commit()
+        # self.cur.execute("DELETE FROM room_user WHERE user_id = ? AND room_id = ? ", (user_id, room_id))
+        #
+        # self.cur.execute("DELETE FROM room_vote WHERE user_id = ? AND room_id = ? ", (user_id, room_id))
+        #
+        # self.conn.commit()
 
         #array_of_rooms_users = []
 
@@ -320,17 +336,6 @@ class Database:
 
         return True
 
-    def set_subject_db(self, room_id, subject):
-        self.cur.execute(
-            "UPDATE room SET subject = ? " +
-            " WHERE id = ?", (subject, room_id))
-
-        self.cur.execute(
-            "DELETE FROM room_vote " +
-            " WHERE room_id = ?", (room_id))
-
-        self.conn.commit()
-
         # with open(db_rooms_users_path, 'r', newline='') as file:
         #     csv_reader = csv.reader(file)
         #     for line in csv_reader:
@@ -348,22 +353,37 @@ class Database:
 
         return False
 
-    def add_points_db(self, room_id, user_id, points):
+    def add_points_db(self, room: Room, user: User, points):
+        existing_vote = None
+
+        for vote in room.votes.all():
+            if vote.user.id == user.id:
+                existing_vote = vote
+                break
+
+        if existing_vote is None:
+            existing_vote = RoomVote(room=room, room_id=room.id, user=user, user_id=user.id,  vote=points)
+            room.votes.append(existing_vote)
+            self.session.add(room)
         # self.cur.execute(
         #     "UPDATE room SET points = points + ? " +
         #     " WHERE id = ?", (points, room_id))
 
+        existing_vote.vote = points
 
-        if(self.is_point_db(room_id, user_id)):
-            self.cur.execute(
-                "UPDATE room_vote SET vote = ? " +
-                " WHERE room_id = ? and user_id = ?", (points, room_id, user_id))
-        else:
-            self.cur.execute(
-                "INSERT INTO room_vote (room_id, user_id, vote) " +
-                "VALUES (? , ? , ?)", (room_id, user_id, points))
 
-        self.conn.commit()
+        self.session.add(existing_vote)
+        self.session.commit()
+        # if(self.is_point_db(room_id, user_id)):
+        #     self.cur.execute(
+        #         "UPDATE room_vote SET vote = ? " +
+        #         " WHERE room_id = ? and user_id = ?", (points, room_id, user_id))
+        # else:
+        #     self.cur.execute(
+        #         "INSERT INTO room_vote (room_id, user_id, vote) " +
+        #         "VALUES (? , ? , ?)", (room_id, user_id, points))
+        #
+        # self.conn.commit()
 
         # with open(db_rooms_users_path, 'r', newline='') as file:
         #     csv_reader = csv.reader(file)
@@ -394,13 +414,16 @@ class Database:
 
     def delete_room_db(self, room: Room, user: User):
 
-        self.cur.execute("DELETE FROM room WHERE id = ?", [room.id])
+        self.session.delete(room)
+        self.session.commit()
 
-        self.cur.execute("DELETE FROM room_user WHERE room_id = ?", [room.id])
-
-        self.cur.execute("DELETE FROM room_vote WHERE room_id = ?", [room.id])
-
-        self.conn.commit()
+        # self.cur.execute("DELETE FROM room WHERE id = ?", [room.id])
+        #
+        # self.cur.execute("DELETE FROM room_user WHERE room_id = ?", [room.id])
+        #
+        # self.cur.execute("DELETE FROM room_vote WHERE room_id = ?", [room.id])
+        #
+        # self.conn.commit()
 
         # array_of_rooms = []
         # array_of_rooms_users = []
@@ -463,16 +486,21 @@ class Database:
         for row in self.cur.fetchall():
             yield {'username': row[0], 'value': row[1]}
 
-    def update_room_db(self, room: Room):
-        old_room = self.find_db_room_by_id(room.id)
+    def update_room_db(self, room: Room, subjectChanged):
+        #old_room = self.find_db_room_by_id(room.id)
 
-        self.cur.execute(" UPDATE room set subject = ?, password = ? WHERE id = ? ",
-                         (room.get_subject(), room.get_password().decode(), room.id))
+        if subjectChanged:
+            for vote in room.votes:
+                room.votes.remove(vote)
+        # self.cur.execute(" UPDATE room set subject = ?, password = ? WHERE id = ? ",
+        #                  (room.get_subject(), room.get_password().decode(), room.id))
 
-        if old_room.get_subject() != room.get_subject():
-            self.cur.execute(" DELETE FROM room_vote WHERE room_id = ? ", [room.id])
-
-        self.conn.commit()
+        self.session.add(room)
+        self.session.commit()
+        # if old_room.get_subject() != room.get_subject():
+        #     self.cur.execute(" DELETE FROM room_vote WHERE room_id = ? ", [room.id])
+        #
+        # self.conn.commit()
 
     def find_db_room_by_id(self, room_id):
         query = self.session.query(Room)

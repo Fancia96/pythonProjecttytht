@@ -18,7 +18,7 @@ class Room(Base):
     owner_id = Column(Integer, ForeignKey('user.id'))
     owner = relationship('User')
     topic = Column(String)
-    votes = relationship('RoomVote', back_populates='room')
+    votes = relationship('RoomVote', back_populates='room', lazy="dynamic", cascade="all, delete")
     users = relationship('User', secondary=room_user_table, back_populates="rooms", lazy="dynamic")
 
     def get_unique_id(self):

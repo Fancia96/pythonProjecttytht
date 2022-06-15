@@ -89,10 +89,10 @@ def show_users(obj, filter):
 
     print("Znalezieni użytkownicy:")
 
-    users_list = usersCommands.find_all_users(db, filter)
+    users_list = usersCommands.find_all_users(db, filter or '')
 
     for user in users_list:
-        click.echo(user.get_name())
+        click.echo(user.username)
 
 
 @user.command()
@@ -228,12 +228,12 @@ def leave_room(obj):
     user = obj['user']
 
     # check if you are owner
-    if not rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+    if not rooms_service.are_you_room_owner(user.id, room.owner_id):
 
         # check if you already joned this room
         if rooms_service.check_if_already_joined_this_room(db, room.id, user):
 
-            left_room = rooms_service.leave_room(db, user, room.id)
+            left_room = rooms_service.leave_room(db, user, room)
 
             if not left_room:
                 print("Opuszczono pokój")
@@ -264,13 +264,13 @@ def set(obj, subject):
     user = obj['user']
 
     # check if you are owner
-    if rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+    if rooms_service.are_you_room_owner(user.id, room.owner_id):
 
         #is_subject = rooms_service.is_subject(db, room.id)
-
-        complete = rooms_service.set_subject(db, room.id, subject)
-        if complete:
-            print("Temat ustawiony")
+        subjectChanged = room.topic != subject
+        room.topic = subject
+        complete = rooms_service.update_room(db, room, subjectChanged)
+        print("Temat ustawiony")
     else:
         print("Nie jesteś wlascicielem pokoju")
 
@@ -289,11 +289,11 @@ def delete(obj, im_sure):
     user = obj['user']
 
     # check if you are owner
-    if rooms_service.are_you_room_owner(user.get_id(), room.get_owner_id()):
+    if rooms_service.are_you_room_owner(user.id, room.owner_id):
 
-        complete = rooms_service.set_subject(db, room.id, '')
-        if complete:
-            print("Temat usunięty")
+        room.topic = ''
+        complete = rooms_service.update_room(db, room, True)
+        print("Temat usunięty")
     else:
         print("Nie jesteś wlascicielem pokoju")
 
@@ -308,8 +308,8 @@ def vote(obj, number):
     list = [0, 0.5, 1, 2, 3, 5, 8, 13, 20, 50, 100, 200, -1, -2]
 
     if number in list:
-        points = rooms_service.add_points(db, room.id, user.get_id(), number)
-        print(f"Punkty dodane - aktualne {points}")
+        rooms_service.set_room_votes(db, room, user, number)
+        print(f"Punkty dodane - aktualne")
     else:
         print(f"ZŁY NUMER {number} Można głosowac jedynie podajać poniższe wartości")
         print(", ".join(str(item) for item in list))
